@@ -1,0 +1,1 @@
+zig build-exe src/main.zig -lglfw -lvulkan -lc -O Debug --name z_engine
