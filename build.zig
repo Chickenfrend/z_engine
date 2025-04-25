@@ -11,8 +11,23 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
-    exe.linkSystemLibrary("glfw");
-    exe.linkSystemLibrary("vulkan");
+    if (target.result.os.tag == .macos) {
+        // Add include paths
+        exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/include" });
+        exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/include" });
+        exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-headers/include" });
+
+        // Add library paths
+        exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/lib" });
+        exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/lib" });
+
+        // Link libraries
+        exe.linkSystemLibrary("glfw");
+        exe.linkSystemLibrary("vulkan");
+    } else if (target.result.os.tag == .linux) {
+        exe.linkSystemLibrary("glfw");
+        exe.linkSystemLibrary("vulkan");
+    }
 
     b.installArtifact(exe);
 

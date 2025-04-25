@@ -6,12 +6,12 @@ const c = @cImport({
 });
 
 fn errorCallback(error_code: c_int, description: [*c]const u8) callconv(.C) void {
-    std.debug.print("GLFW Error ({}): {s}\n", .{error_code, description});
+    std.debug.print("GLFW Error ({}): {s}\n", .{ error_code, description });
 }
 
 pub fn main() !void {
     _ = c.glfwSetErrorCallback(errorCallback);
-    
+
     if (c.glfwInit() == 0) {
         std.debug.print("Failed to initialize GLFW\n", .{});
         return error.GLFWInitFailed;

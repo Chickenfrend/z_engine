@@ -1,0 +1,12 @@
+## Z_ENGINE
+
+### INSTALLATION
+
+#### MACOS
+
+On MacOS you need to install GLFW and Vulkan using brew:
+
+```
+brew install glfw
+brew install vulkan-sdk
+```
