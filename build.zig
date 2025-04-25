@@ -10,6 +10,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
+    b.installArtifact(exe);
 
     exe.linkLibC();
 
@@ -22,16 +23,17 @@ pub fn build(b: *std.Build) !void {
         // Add library paths
         exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/lib" });
         exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/lib" });
-
-        // Link libraries
-        exe.linkSystemLibrary("glfw");
-        exe.linkSystemLibrary("vulkan");
-    } else if (target.result.os.tag == .linux) {
-        exe.linkSystemLibrary("glfw");
-        exe.linkSystemLibrary("vulkan");
     }
+    // Link libraries
+    exe.linkSystemLibrary("glfw");
+    //exe.linkSystemLibrary("vulkan");
+    //exe.linkSystemLibrary("vulkan_headers");
 
-    b.installArtifact(exe);
+    const vulkan = b.dependency("vulkan_zig", .{
+        .registry = b.dependency("vulkan_headers", .{}).path("registry/vk.xml"),
+    }).module("vulkan-zig");
+
+    exe.root_module.addImport("vulkan", vulkan);
 
     const run_step = b.step("run", "Run the application");
     const run_cmd = b.addRunArtifact(exe);

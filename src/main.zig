@@ -22,7 +22,7 @@ pub fn main() !void {
     c.glfwWindowHint(c.GLFW_VISIBLE, c.GLFW_TRUE);
     c.glfwWindowHint(c.GLFW_RESIZABLE, c.GLFW_TRUE);
 
-    const window = c.glfwCreateWindow(800, 600, "Vulkan Window", null, null) orelse {
+    const window = c.glfwCreateWindow(800, 600, "z_engine", null, null) orelse {
         std.debug.print("Failed to create window\n", .{});
         return error.WindowCreationFailed;
     };
