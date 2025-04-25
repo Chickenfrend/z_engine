@@ -11,6 +11,8 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
+    exe.linkLibC();
+
     if (target.result.os.tag == .macos) {
         // Add include paths
         exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/include" });
