@@ -9,7 +9,7 @@ pub fn build(b: *std.Build) !void {
 
     const triangle_exe = b.addExecutable(.{
         .name = "triangle",
-        .root_source_file = b.path("triangle.zig"),
+        .root_source_file = b.path("src/triangle.zig"),
         .target = target,
         .link_libc = true,
         .optimize = optimize,

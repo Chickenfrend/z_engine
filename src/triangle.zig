@@ -1,8 +1,8 @@
 const std = @import("std");
 const vk = @import("vulkan");
-const c = @import("c.zig");
-const GraphicsContext = @import("graphics_context.zig").GraphicsContext;
-const Swapchain = @import("swapchain.zig").Swapchain;
+const c = @import("graphics/c.zig");
+const GraphicsContext = @import("graphics/graphics_context.zig").GraphicsContext;
+const Swapchain = @import("graphics/swapchain.zig").Swapchain;
 const Allocator = std.mem.Allocator;
 
 const vert_spv align(@alignOf(u32)) = @embedFile("vertex_shader").*;
