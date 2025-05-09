@@ -3,39 +3,68 @@ const std = @import("std");
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const maybe_override_registry = b.option([]const u8, "override-registry", "Override the path to the Vulkan registry used for the examples");
 
-    const exe = b.addExecutable(.{
-        .name = "vulkan_window",
-        .root_source_file = b.path("src/main.zig"),
+    const registry = b.dependency("vulkan_headers", .{}).path("registry/vk.xml");
+
+    const triangle_exe = b.addExecutable(.{
+        .name = "triangle",
+        .root_source_file = b.path("triangle.zig"),
         .target = target,
+        .link_libc = true,
         .optimize = optimize,
     });
-    b.installArtifact(exe);
-
-    exe.linkLibC();
+    b.installArtifact(triangle_exe);
 
     if (target.result.os.tag == .macos) {
         // Add include paths
-        exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/include" });
-        exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/include" });
-        exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-headers/include" });
+        triangle_exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/include" });
+        triangle_exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/include" });
+        triangle_exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-headers/include" });
 
         // Add library paths
-        exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/lib" });
-        exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/lib" });
+        triangle_exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/lib" });
+        triangle_exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/lib" });
     }
-    // Link libraries
-    exe.linkSystemLibrary("glfw");
-    //exe.linkSystemLibrary("vulkan");
-    //exe.linkSystemLibrary("vulkan_headers");
+
+    triangle_exe.linkSystemLibrary("glfw");
+
+    const registry_path: std.Build.LazyPath = if (maybe_override_registry) |override_registry|
+        .{ .cwd_relative = override_registry }
+    else
+        registry;
 
     const vulkan = b.dependency("vulkan_zig", .{
-        .registry = b.dependency("vulkan_headers", .{}).path("registry/vk.xml"),
+        .registry = registry_path,
     }).module("vulkan-zig");
 
-    exe.root_module.addImport("vulkan", vulkan);
+    triangle_exe.root_module.addImport("vulkan", vulkan);
 
-    const run_step = b.step("run", "Run the application");
-    const run_cmd = b.addRunArtifact(exe);
-    run_step.dependOn(&run_cmd.step);
+    const vert_cmd = b.addSystemCommand(&.{
+        "glslc",
+        "--target-env=vulkan1.2",
+        "-o",
+    });
+    const vert_spv = vert_cmd.addOutputFileArg("vert.spv");
+    vert_cmd.addFileArg(b.path("shaders/triangle.vert"));
+    triangle_exe.root_module.addAnonymousImport("vertex_shader", .{
+        .root_source_file = vert_spv,
+    });
+
+    const frag_cmd = b.addSystemCommand(&.{
+        "glslc",
+        "--target-env=vulkan1.2",
+        "-o",
+    });
+    const frag_spv = frag_cmd.addOutputFileArg("frag.spv");
+    frag_cmd.addFileArg(b.path("shaders/triangle.frag"));
+    triangle_exe.root_module.addAnonymousImport("fragment_shader", .{
+        .root_source_file = frag_spv,
+    });
+
+    const triangle_run_cmd = b.addRunArtifact(triangle_exe);
+    triangle_run_cmd.step.dependOn(b.getInstallStep());
+
+    const triangle_run_step = b.step("run-triangle", "Run the triangle example");
+    triangle_run_step.dependOn(&triangle_run_cmd.step);
 }

@@ -49,21 +49,30 @@ pub const GraphicsContext = struct {
         self.allocator = allocator;
         self.vkb = BaseWrapper.load(c.glfwGetInstanceProcAddress);
 
+        var extension_names = std.ArrayList([*:0]const u8).init(allocator);
+        defer extension_names.deinit();
+        // these extensions are to support vulkan in mac os
+        // see https://github.com/glfw/glfw/issues/2335
+        try extension_names.append("VK_KHR_portability_enumeration");
+        try extension_names.append("VK_KHR_get_physical_device_properties2");
+
         var glfw_exts_count: u32 = 0;
         const glfw_exts = c.glfwGetRequiredInstanceExtensions(&glfw_exts_count);
-
-        const app_info = vk.ApplicationInfo{
-            .p_application_name = app_name,
-            .application_version = @bitCast(vk.makeApiVersion(0, 0, 0, 0)),
-            .p_engine_name = app_name,
-            .engine_version = @bitCast(vk.makeApiVersion(0, 0, 0, 0)),
-            .api_version = @bitCast(vk.API_VERSION_1_2),
-        };
+        try extension_names.appendSlice(@ptrCast(glfw_exts[0..glfw_exts_count]));
 
         const instance = try self.vkb.createInstance(&.{
-            .p_application_info = &app_info,
-            .enabled_extension_count = glfw_exts_count,
-            .pp_enabled_extension_names = @ptrCast(glfw_exts),
+            .p_application_info = &.{
+                .p_application_name = app_name,
+                .application_version = @bitCast(vk.makeApiVersion(0, 0, 0, 0)),
+                .p_engine_name = app_name,
+                .engine_version = @bitCast(vk.makeApiVersion(0, 0, 0, 0)),
+                .api_version = @bitCast(vk.API_VERSION_1_2),
+            },
+            .enabled_extension_count = @intCast(extension_names.items.len),
+            .pp_enabled_extension_names = extension_names.items.ptr,
+            // enumerate_portability_bit_khr to support vulkan in mac os
+            // see https://github.com/glfw/glfw/issues/2335
+            .flags = .{ .enumerate_portability_bit_khr = true },
         }, null);
 
         const vki = try allocator.create(InstanceWrapper);
