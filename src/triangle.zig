@@ -148,13 +148,12 @@ pub fn main() !void {
     defer destroyCommandBuffers(&gc, pool, allocator, cmdbufs);
 
     // Simplified time tracking
-    const start_time = std.time.milliTimestamp();
-    var prev_time = start_time;
+    // Should do better error handling
+    var timer = std.time.Timer.start() catch std.process.exit(1);
 
     while (c.glfwWindowShouldClose(window) == c.GLFW_FALSE) {
-        const current_time = std.time.milliTimestamp();
-        const elapsed = @as(f32, @floatFromInt(current_time - start_time)) / 1000.0;
-        prev_time = current_time;
+        // Should do better error handling
+        const elapsed = @as(f32, @floatFromInt(timer.read())) / 1_000_000_000.0;
 
         var w: c_int = undefined;
         var h: c_int = undefined;
@@ -173,15 +172,8 @@ pub fn main() !void {
         };
 
         try gc.dev.beginCommandBuffer(cmdbuf, &.{});
-        
-        gc.dev.cmdPushConstants(
-            cmdbuf,
-            pipeline_layout,
-            .{ .vertex_bit = true },
-            0,
-            @sizeOf(@TypeOf(offset)),
-            @ptrCast(&offset)
-        );
+
+        gc.dev.cmdPushConstants(cmdbuf, pipeline_layout, .{ .vertex_bit = true }, 0, @sizeOf(@TypeOf(offset)), @ptrCast(&offset));
 
         gc.dev.cmdSetViewport(cmdbuf, 0, 1, @ptrCast(&vk.Viewport{
             .x = 0,
