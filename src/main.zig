@@ -1,11 +1,20 @@
 //! By convention, main.zig is where your main function lives in the case that
 //! you are building an executable. If you are making a library, the convention
 //! is to delete this file and start with root.zig instead.
+const builtin = @import("builtin");
+
 const c = @cImport({
-    @cDefine("GLFW_INCLUDE_NONE", {});
-    @cInclude("GLFW/glfw3.h");
-    @cInclude("OpenGL/gl.h");
+    if (builtin.os.tag == .macos) {
+        @cInclude("OpenGL/gl.h");
+        @cDefine("GLFW_INCLUDE_NONE", {});
+        @cInclude("GLFW/glfw3.h");
+    } else {
+        @cInclude("GL/gl.h");
+        @cDefine("GLFW_INCLUDE_NONE", {});
+        @cInclude("GLFW/glfw3.h");
+    }
 });
+
 
 pub fn main() !void {
     _ = c.glfwInit();
