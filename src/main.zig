@@ -5,9 +5,9 @@
 const std = @import("std");
 const Shader = @import("./rendering/ShaderLib.zig");
 const c = @cImport({
-    @cDefine("GLFW_INCLUDE_NONE", {});
+    @cDefine("GLFW_INCLUDE_GL", "");
+    @cDefine("GL_GLEXT_PROTOTYPES", "");    
     @cInclude("GLFW/glfw3.h");
-    @cInclude("GL/gl.h");
 });
 
 const WindowSize = struct {
