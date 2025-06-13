@@ -1,5 +1,11 @@
 const std = @import("std");
 
+inline fn thisDir() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
+}
+
+const shader_dir = "src/rendering/shaders";
+
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
 // runner.
@@ -80,6 +86,16 @@ pub fn build(b: *std.Build) void {
     }
     exe.linkSystemLibrary("glfw");
     exe.linkLibC();
+
+        const install_content_step = b.addInstallDirectory(.{
+        .source_dir = b.path(thisDir() ++ "/" ++ shader_dir),
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "bin/" ++ shader_dir,
+    });
+
+    exe.step.dependOn(&install_content_step.step);
+
+
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
