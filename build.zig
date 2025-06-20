@@ -95,7 +95,11 @@ pub fn build(b: *std.Build) void {
 
     exe.step.dependOn(&install_content_step.step);
 
-
+    const zm = b.dependency("zm", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe_mod.addImport("zm", zm.module("zm"));
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
@@ -118,7 +122,6 @@ pub fn build(b: *std.Build) void {
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
-
     // This creates a build step. It will be visible in the `zig build --help` menu,
     // and can be selected like this: `zig build run`
     // This will evaluate the `run` step rather than the default, which is "install".

@@ -4,7 +4,7 @@
 
 const std = @import("std");
 const zstbi = @import("zstbi");
-const zm = @import("zmath");
+const zm = @import("zm");
 const Shader = @import("./rendering/ShaderLib.zig");
 const c = @cImport({
     @cDefine("GLFW_INCLUDE_GL", "");
@@ -102,14 +102,13 @@ pub fn main() !void {
     c.glEnableVertexAttribArray(0);
 
     // Buffer to store Model and Projection matrices
-    var model: [16]f32 = undefined;
-    var proj: [16]f32 = undefined;
-
+    var proj: @Vector(16, f32) = undefined;
     // This is the loop that keeps the window open and draws to the screen.
     while (c.glfwWindowShouldClose(window) == 0) {
 
         // Input
         processInput(window);
+        c.glBindVertexArray(VAO);
 
         // Render
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -117,39 +116,32 @@ pub fn main() !void {
 
         // Project and positioning.
         const projM = x: {
-            var window_size = window.getSize();
-            var width = @intToFloat(f32, window_size.width);
-            var height = @intToFloat(f32, window_size.height);
+            // This should be changed to use a variable size
+            const width: f32 = WindowSize.width;
+            const height: f32 = WindowSize.height;
             
             // Orthographic projection - maps directly to screen coordinates
-            var projM = zm.orthographicRh(0.0, width, 0.0, height, 0.1, 100.0);
+            const projM = zm.Mat4.orthographic(0.0, width, 0.0, height, 0.1, 100.0);
             break :x projM;
         };
-        zm.storeMat(&proj, projM);
-        shader_program.setMat4f("projection", proj);
+        proj = @floatCast(projM.data);
+        shaderProgram.setMat4f("projection", proj);
 
 
         // Draw the squares
 
-        for (square_position, 0..) |square_position, i| {
+        for (square_positions) |square_position| {
             // Translation based on the position
-            const square_trans = zm.translation(square_position[0], square_position[1], 0.0);
+            const square_trans = zm.Mat4.translation(square_position[0], square_position[1], 0.0);
 
             // You could add rotation and stuff onto this.
             const modelM = square_trans;
 
-            zm.storeMat(&model, modelM);
-            shader_program.setMat4f("model", model);
+            shaderProgram.setMat4f("model", modelM);
             
             // Draw square using indices
-            gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, null);
+            c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
         }
-
-        // Draw the square
-        shaderProgram.use();
-        c.glBindVertexArray(VAO);
-        c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
-        c.glDrawArrays(c.GL_TRIANGLES, 0, 3);
 
         c.glfwSwapBuffers(window);
         c.glfwPollEvents();
