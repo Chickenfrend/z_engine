@@ -77,7 +77,7 @@ pub fn create(arena: std.mem.Allocator, vertex_path: []const u8, fragment_path: 
     c.glGetShaderiv(fragmentShader, c.GL_COMPILE_STATUS, &success);
     if (success == 0) {
         c.glGetShaderInfoLog(fragmentShader, 512, 0, &infoLog);
-        std.log.err("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{s}\n", .{infoLog[0 .. std.mem.indexOfScalar(u8, &infoLog, 0) orelse infoLog.len]});
+        std.log.err("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n{s}\n", .{infoLog[0 .. std.mem.indexOfScalar(u8, &infoLog, 0) orelse infoLog.len]});
     }
 
     // This is the creation of the shader program.
@@ -92,7 +92,7 @@ pub fn create(arena: std.mem.Allocator, vertex_path: []const u8, fragment_path: 
     c.glGetProgramiv(shaderProgram, c.GL_LINK_STATUS, &success);
     if (success == 0) {
         c.glGetProgramInfoLog(shaderProgram, 512, 0, &infoLog);
-        std.log.err("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{s}\n", .{infoLog[0 .. std.mem.indexOfScalar(u8, &infoLog, 0) orelse infoLog.len]});
+        std.log.err("ERROR::SHADER::LINKING::COMPILATION_FAILED\n{s}\n", .{infoLog[0 .. std.mem.indexOfScalar(u8, &infoLog, 0) orelse infoLog.len]});
     }
 
     return Shader{ .ID = shaderProgram };
