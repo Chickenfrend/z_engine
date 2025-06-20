@@ -39,27 +39,18 @@ pub fn main() !void {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
     // This is the creation of the shader program.
-    const shaderProgram: Shader = Shader.create(arena_allocator, "src/rendering/shaders/triangle_shader.vs", "src/rendering/shaders/triangle_shader.fs");
+    const shaderProgram: Shader = Shader.create(arena_allocator, "src/rendering/shaders/triangle_shader.vert", "src/rendering/shaders/triangle_shader.frag");
 
     // These are the twelve vertices that make up the square.
-    const vertices = [12]f32{
-        0.5,
-        0.5,
-        0.0,
-        0.5,
-        -0.5,
-        0.0,
-        -0.5,
-        -0.5,
-        0.0,
-        -0.5,
-        0.5,
-        0.0,
+    const vertices = [18]f32{
+            // positions         // colors
+         0.5, -0.5, 0.0,  1.0, 0.0, 0.0,   // bottom right
+        -0.5, -0.5, 0.0,  0.0, 1.0, 0.0,   // bottom left
+         0.0,  0.5, 0.0,  0.0, 0.0, 1.0    // top 
     };
     // These are the indices for the two triangles that make up the square.
-    const indices = [6]u32{
-        0, 1, 3,
-        1, 2, 3,
+    const indices = [3]u32{
+        0, 1, 2,
     };
 
     // This is the vertex buffer id, the vertex array object id, and the element buffer object ID. Later we assign a vertex buffer to the vertex buffer id.
@@ -88,9 +79,15 @@ pub fn main() !void {
     // This tells openGL how to interpret the vertex data. It defines the layout of the vertex data in the buffer.
     // These parameters are confusing. But, info on them can be found here: https://learnopengl.com/Getting-started/Hello-Triangle
     // I'll just say that the 3 is because we're using vec3
-    c.glVertexAttribPointer(0, 3, c.GL_FLOAT, c.GL_FALSE, 3 * @sizeOf(f32), null);
+    c.glVertexAttribPointer(0, 3, c.GL_FLOAT, c.GL_FALSE, 6 * @sizeOf(f32), null);
     c.glEnableVertexAttribArray(0);
+    
+    c.glVertexAttribPointer(1, 3, c.GL_FLOAT, c.GL_FALSE, 6 * @sizeOf(f32), @ptrFromInt(3*@sizeOf(f32)));
+    c.glEnableVertexAttribArray(1);
 
+    // Uncomment this to get wireframes
+    // c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
+    
     // This is the loop that keeps the window open and draws to the screen.
     while (c.glfwWindowShouldClose(window) == 0) {
 
@@ -103,9 +100,12 @@ pub fn main() !void {
 
         // Draw the square
         shaderProgram.use();
+
+        const vertexColorLocation = c.glGetUniformLocation(shaderProgram.ID, "ourColor");
+        c.glUniform4f(vertexColorLocation, 0.0, calculateGreenValue(c.glfwGetTime()), 0.0, 1.0);
+
         c.glBindVertexArray(VAO);
         c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
-        c.glDrawArrays(c.GL_TRIANGLES, 0, 3);
 
         c.glfwSwapBuffers(window);
         c.glfwPollEvents();
@@ -115,6 +115,13 @@ pub fn main() !void {
 
     return;
 }
+
+
+fn calculateGreenValue(time: f64) f32 {
+    const timeCasted: f32 = @floatCast(time);
+    return @sin(timeCasted) / 2.0 + 0.5;
+}
+
 
 fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
     _ = window;

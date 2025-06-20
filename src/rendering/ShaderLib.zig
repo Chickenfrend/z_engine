@@ -34,18 +34,15 @@ pub fn create(arena: std.mem.Allocator, vertex_path: []const u8, fragment_path: 
         vertex_path,
     }) catch unreachable;
 
-    std.debug.print("Full vertex path: {s}\n", .{full_vertex_path});
 
     const full_fragment_path = std.fs.path.join(arena, &.{
         arena_path,
         fragment_path,
     }) catch unreachable;
 
-    std.debug.print("Full fragment path: {s}\n", .{full_fragment_path});
 
     const vertex_file = std.fs.openFileAbsolute(full_vertex_path, .{}) catch unreachable;
     const vertexShaderSource = vertex_file.readToEndAlloc(arena, 10 * 1024) catch unreachable;
-    std.debug.print("Vertex shader source: {s}\n", .{vertexShaderSource});
 
     const vertexShaderSourceZ = arena.dupeZ(u8, vertexShaderSource);
 
@@ -92,7 +89,6 @@ pub fn create(arena: std.mem.Allocator, vertex_path: []const u8, fragment_path: 
     c.glLinkProgram(shaderProgram);
 
     // Checking for linking errors.
-    std.debug.print("About to check for linking errors", .{});
     c.glGetProgramiv(shaderProgram, c.GL_LINK_STATUS, &success);
     if (success == 0) {
         c.glGetProgramInfoLog(shaderProgram, 512, 0, &infoLog);
