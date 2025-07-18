@@ -121,10 +121,11 @@ pub fn main() !void {
             const height: f32 = WindowSize.height;
             
             // Orthographic projection - maps directly to screen coordinates
-            const projM = zm.Mat4.orthographic(0.0, width, 0.0, height, 0.1, 100.0);
+            const projM = zm.Mat4f.orthographic(0.0, width, 0.0, height, 0.1, 100.0);
             break :x projM;
         };
         proj = @floatCast(projM.data);
+        shaderProgram.use();
         shaderProgram.setMat4f("projection", proj);
 
 
@@ -132,12 +133,12 @@ pub fn main() !void {
 
         for (square_positions) |square_position| {
             // Translation based on the position
-            const square_trans = zm.Mat4.translation(square_position[0], square_position[1], 0.0);
+            const square_trans = zm.Mat4f.translation(square_position[0], square_position[1], 0.0);
 
             // You could add rotation and stuff onto this.
             const modelM = square_trans;
 
-            shaderProgram.setMat4f("model", modelM);
+            shaderProgram.setMat4f("model", modelM.data);
             
             // Draw square using indices
             c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
