@@ -81,6 +81,13 @@ pub fn build(b: *std.Build) void {
         exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/lib" });
         exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/lib" });
         exe.linkFramework("OpenGL");
+    } else if (target.result.os.tag == .linux) {
+        exe.linkSystemLibrary("dl");
+        exe.linkSystemLibrary("pthread");
+        exe.linkSystemLibrary("m");
+        exe.linkSystemLibrary("pulse");
+        exe.linkSystemLibrary("atomic");
+        exe.linkSystemLibrary("GL");
     } else {
         exe.linkSystemLibrary("GL");
     }
@@ -95,7 +102,10 @@ pub fn build(b: *std.Build) void {
 
     exe.step.dependOn(&install_content_step.step);
 
-
+    exe.addCSourceFile(.{
+        .file = b.path("src/external/miniaudio.c"),
+    });
+    exe.addIncludePath(b.path("src/external"));
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default

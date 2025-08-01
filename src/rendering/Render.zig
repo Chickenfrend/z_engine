@@ -30,7 +30,12 @@ const RenderPipeline = struct {
         self.shader.use();
 
         const vertexColorLocation = c.glGetUniformLocation(self.shader.ID, "ourColor");
-        c.glUniform4f(vertexColorLocation, 0.0, calculateGreenValue(c.glfwGetTime()), 0.0, 1.0);
+        c.glUniform4f(vertexColorLocation, 0.0, sinLoopFromTime(c.glfwGetTime()), 0.0, 1.0);
+
+        const bounceLocation = c.glGetUniformLocation(self.shader.ID, "bounce");
+        c.glUniform1f(bounceLocation, sinLoopFromTime(c.glfwGetTime()));
+
+
         c.glBindVertexArray(self.vao);
         c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);   
     }
@@ -93,7 +98,7 @@ pub fn setup(allocator: std.mem.Allocator) RenderPipeline{
 }
 
 
-fn calculateGreenValue(time: f64) f32 {
+fn sinLoopFromTime(time: f64) f32 {
     const timeCasted: f32 = @floatCast(time);
     return @sin(timeCasted) / 2.0 + 0.5;
 }
