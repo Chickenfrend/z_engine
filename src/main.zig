@@ -65,11 +65,7 @@ pub fn main() !void {
         1, 2, 3,
     };
     const square_positions = [_][2]f32{
-        .{ 100.0, 100.0 },
-        .{ 300.0, 200.0 },
-        .{ 500.0, 150.0 },
-        .{ 200.0, 400.0 },
-        .{ 600.0, 450.0 },
+        .{400, 300}
     };
 
     // This is the vertex buffer id, the vertex array object id, and the element buffer object ID. Later we assign a vertex buffer to the vertex buffer id.
@@ -121,10 +117,10 @@ pub fn main() !void {
             const height: f32 = WindowSize.height;
             
             // Orthographic projection - maps directly to screen coordinates
-            const projM = zm.Mat4f.orthographic(0.0, width, 0.0, height, 0.1, 100.0);
+            const projM = zm.Mat4f.orthographic(0.0, width, height, 0.0, 0.1, 100.0);
             break :x projM;
         };
-        proj = @floatCast(projM.data);
+        proj = projM.data;
         shaderProgram.use();
         shaderProgram.setMat4f("projection", proj);
 
@@ -134,9 +130,16 @@ pub fn main() !void {
         for (square_positions) |square_position| {
             // Translation based on the position
             const square_trans = zm.Mat4f.translation(square_position[0], square_position[1], 0.0);
+            const identity = zm.Mat4f.identity();
+            // const scale = zm.Mat4f.scaling(50.0, 50.0, 1.0);
+            const scale = identity;
+            std.debug.print("Square position {d}", .{square_position});
+
+            // std.debug.print("Square translation matrix {d}", .{square_trans.data});
 
             // You could add rotation and stuff onto this.
-            const modelM = square_trans;
+            const modelM = zm.Mat4f.multiply(scale, square_trans);
+            std.debug.print("Square model {d}", .{modelM.data});
 
             shaderProgram.setMat4f("model", modelM.data);
             
