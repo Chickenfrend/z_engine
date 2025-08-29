@@ -65,7 +65,7 @@ pub fn main() !void {
         1, 2, 3,
     };
     const square_positions = [_][2]f32{
-        .{400, 300}
+        .{0, 0}
     };
 
     // This is the vertex buffer id, the vertex array object id, and the element buffer object ID. Later we assign a vertex buffer to the vertex buffer id.
@@ -100,6 +100,7 @@ pub fn main() !void {
     // Buffer to store Model and Projection matrices
     var proj: @Vector(16, f32) = undefined;
     // This is the loop that keeps the window open and draws to the screen.
+    c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
     while (c.glfwWindowShouldClose(window) == 0) {
 
         // Input
@@ -117,7 +118,7 @@ pub fn main() !void {
             const height: f32 = WindowSize.height;
             
             // Orthographic projection - maps directly to screen coordinates
-            const projM = zm.Mat4f.orthographic(0.0, width, height, 0.0, 0.1, 100.0);
+            const projM = zm.Mat4f.orthographic(0.0, width, 0.0, height, -1.0, 1.0);
             break :x projM;
         };
         proj = projM.data;
@@ -130,16 +131,17 @@ pub fn main() !void {
         for (square_positions) |square_position| {
             // Translation based on the position
             const square_trans = zm.Mat4f.translation(square_position[0], square_position[1], 0.0);
-            const identity = zm.Mat4f.identity();
-            // const scale = zm.Mat4f.scaling(50.0, 50.0, 1.0);
-            const scale = identity;
-            std.debug.print("Square position {d}", .{square_position});
+            //const identity = zm.Mat4f.identity();
+            const scale = zm.Mat4f.scaling(50.0, 50.0, 1.0);
+            //const scale = identity;
+            //std.debug.print("Square position {d}\n", .{square_position});
 
             // std.debug.print("Square translation matrix {d}", .{square_trans.data});
 
             // You could add rotation and stuff onto this.
-            const modelM = zm.Mat4f.multiply(scale, square_trans);
-            std.debug.print("Square model {d}", .{modelM.data});
+            const modelM = zm.Mat4f.multiply(square_trans, scale);
+            std.debug.print("Square model {d}\n", .{modelM.data});
+
 
             shaderProgram.setMat4f("model", modelM.data);
             
