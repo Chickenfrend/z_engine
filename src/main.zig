@@ -65,7 +65,7 @@ pub fn main() !void {
         1, 2, 3,
     };
     const square_positions = [_][2]f32{
-        .{0, 0}
+        .{100, 200},
     };
 
     // This is the vertex buffer id, the vertex array object id, and the element buffer object ID. Later we assign a vertex buffer to the vertex buffer id.
@@ -114,11 +114,12 @@ pub fn main() !void {
         // Project and positioning.
         const projM = x: {
             // This should be changed to use a variable size
-            const width: f32 = WindowSize.width;
-            const height: f32 = WindowSize.height;
+            // const width: f32 = WindowSize.width;
+            // const height: f32 = WindowSize.height;
             
             // Orthographic projection - maps directly to screen coordinates
-            const projM = zm.Mat4f.orthographic(0.0, width, 0.0, height, -1.0, 1.0);
+            const projM = zm.Mat4f.orthographic(-500, 500, -500, 500, -1.0, 1.0);
+            // const projM = zm.Mat4f.identity();
             break :x projM;
         };
         proj = projM.data;
@@ -131,19 +132,25 @@ pub fn main() !void {
         for (square_positions) |square_position| {
             // Translation based on the position
             const square_trans = zm.Mat4f.translation(square_position[0], square_position[1], 0.0);
-            //const identity = zm.Mat4f.identity();
+            // const identity = zm.Mat4f.identity();
             const scale = zm.Mat4f.scaling(50.0, 50.0, 1.0);
-            //const scale = identity;
+            // const scale = identity;
             //std.debug.print("Square position {d}\n", .{square_position});
 
             // std.debug.print("Square translation matrix {d}", .{square_trans.data});
 
             // You could add rotation and stuff onto this.
-            const modelM = zm.Mat4f.multiply(square_trans, scale);
+            const modelM = square_trans.multiply(scale); 
+            // const modelM = zm.Mat4f.multiply(square_trans, scale);
+            std.debug.print("Translation matrix {d}\n", .{square_trans.data});
+            std.debug.print("Scaling matrix {d}\n", .{scale.data});
             std.debug.print("Square model {d}\n", .{modelM.data});
 
-
             shaderProgram.setMat4f("model", modelM.data);
+            const final_matrix_test = projM.multiply(modelM);
+            writeVectorBetter(final_matrix_test);
+            std.debug.print("Ortho {d}\n", .{projM.data});
+            std.debug.print("Final Matrix? {d}\n", .{final_matrix_test.data});
             
             // Draw square using indices
             c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
@@ -166,6 +173,16 @@ fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_in
 fn processInput(window: ?*c.GLFWwindow) void {
     if (c.glfwGetKey(window, c.GLFW_KEY_ESCAPE) == c.GLFW_PRESS) {
         c.glfwSetWindowShouldClose(window, 1);
+    }
+}
+
+fn writeVectorBetter(input: zm.matrix.Mat4Base(f32)) void {
+    const data = input.data;
+    for (0..4) |i| {
+        for (0..4) |j| {
+            std.debug.print("{d}    ", .{data[i*j]});
+        }
+        std.debug.print("\n", . {});
     }
 }
 
