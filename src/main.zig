@@ -66,6 +66,10 @@ pub fn main() !void {
     };
     const square_positions = [_][2]f32{
         .{100, 200},
+        .{0, 0},
+        .{750, 550},
+        .{250, 250},
+        .{400, 300},
     };
 
     // This is the vertex buffer id, the vertex array object id, and the element buffer object ID. Later we assign a vertex buffer to the vertex buffer id.
@@ -118,7 +122,7 @@ pub fn main() !void {
             // const height: f32 = WindowSize.height;
             
             // Orthographic projection - maps directly to screen coordinates
-            const projM = zm.Mat4f.orthographic(-500, 500, -500, 500, -1.0, 1.0);
+            const projM = zm.Mat4f.orthographic(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
             // const projM = zm.Mat4f.identity();
             break :x projM;
         };
