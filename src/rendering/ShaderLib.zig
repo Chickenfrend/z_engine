@@ -92,7 +92,8 @@ pub fn create(arena: std.mem.Allocator, vertex_path: []const u8, fragment_path: 
     c.glGetProgramiv(shaderProgram, c.GL_LINK_STATUS, &success);
     if (success == 0) {
         c.glGetProgramInfoLog(shaderProgram, 512, 0, &infoLog);
-        std.log.err("ERROR::SHADER::LINKING::COMPILATION_FAILED\n{s}\n", .{infoLog[0 .. std.mem.indexOfScalar(u8, &infoLog, 0) orelse infoLog.len]});
+        std.log.err("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{s}\n", .{infoLog[0 .. std.mem.indexOfScalar(u8, &infoLog, 0) orelse infoLog.len]});
+        std.process.exit(1);
     }
 
     return Shader{ .ID = shaderProgram };
@@ -112,4 +113,9 @@ pub fn setInt(self: Shader, name: [*c]const u8, value: u32) void {
 
 pub fn setFloat(self: Shader, name: [*c]const u8, value: f32) void {
     c.glUniform1f(c.glGetUniformLocation(self.ID, name), value);
+}
+
+pub fn setMat4f(self: Shader, name: [*c]const u8, value: [16]f32) void {
+     const matLoc = c.glGetUniformLocation(self.ID, name);
+    c.glUniformMatrix4fv(matLoc, 1, c.GL_TRUE, &value);
 }
