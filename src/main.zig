@@ -3,7 +3,6 @@
 //! is to delete this file and start with root.zig instead.
 
 const std = @import("std");
-const zstbi = @import("zstbi");
 const zm = @import("zm");
 const Shader = @import("./rendering/ShaderLib.zig");
 const c = @cImport({
