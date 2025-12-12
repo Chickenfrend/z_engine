@@ -4,14 +4,17 @@
 
 const std = @import("std");
 const zm = @import("zm");
-const Shader = @import("./rendering/ShaderLib.zig");
-const Square = @import("./rendering/Square.zig");
-const Renderer = @import("./rendering/Render.zig");
+
 const c = @cImport({
     @cDefine("GLFW_INCLUDE_GL", "");
     @cDefine("GL_GLEXT_PROTOTYPES", "");
     @cInclude("GLFW/glfw3.h");
 });
+
+const state = @import("./ecs/state.zig");
+const Shader = @import("./rendering/ShaderLib.zig");
+const Square = @import("./rendering/Square.zig");
+const Renderer = @import("./rendering/Render.zig");
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
@@ -57,11 +60,25 @@ pub fn main() !void {
         .{ 400, 300 },
     };
 
-    // This is the loop that keeps the window open and draws to the screen.
-    //c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
-    while (c.glfwWindowShouldClose(window) == 0) {
+    var global_state: state.GlobalState = .{
+        .clock = std.time.Timer.start() catch |err| {
+            std.debug.panic("Couldn't find timer!: {s}\n", .{@errorName(err)});
+        },
+        .game_state = state.GameState.init(arena_allocator) catch |err| {
+            std.debug.panic("Failed to initialize game state: {s}\n", .{@errorName(err)});
+        },
+    };
 
-        // Input
+    // This is the loop that keeps the window open and draws to the screen.
+
+    //c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
+    global_state.clock.reset();
+    var num_frames: u64 = 0;
+    var last_second: u64 = 0;
+    while (c.glfwWindowShouldClose(window) == 0) {
+        const total_elapsed_ns = global_state.clock.read();
+
+        // Process Input
         processInput(window);
 
         // Render
@@ -70,7 +87,13 @@ pub fn main() !void {
 
         try render_pipeline.render(geometry, &square_positions);
 
+        if (total_elapsed_ns / std.time.ns_per_s > last_second) {
+            std.debug.print("{d} fps\n", .{num_frames});
+            num_frames = 0;
+            last_second += 1;
+        }
         c.glfwSwapBuffers(window);
+        num_frames += 1;
         c.glfwPollEvents();
     }
 
