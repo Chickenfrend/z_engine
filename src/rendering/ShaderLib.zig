@@ -4,7 +4,7 @@ const std = @import("std");
 
 const c = @cImport({
     @cDefine("GLFW_INCLUDE_GL", "");
-    @cDefine("GL_GLEXT_PROTOTYPES", "");    
+    @cDefine("GL_GLEXT_PROTOTYPES", "");
     @cInclude("GLFW/glfw3.h");
 });
 
@@ -34,19 +34,23 @@ pub fn create(arena: std.mem.Allocator, vertex_path: []const u8, fragment_path: 
         vertex_path,
     }) catch unreachable;
 
-
     const full_fragment_path = std.fs.path.join(arena, &.{
         arena_path,
         fragment_path,
     }) catch unreachable;
 
-
-    const vertex_file = std.fs.openFileAbsolute(full_vertex_path, .{}) catch unreachable;
+    const vertex_file = std.fs.openFileAbsolute(full_vertex_path, .{}) catch |e| {
+        std.log.err("Failed to open vertex shader returned ErrorCode: {s} file path: {s}", .{ @errorName(e), full_vertex_path });
+        std.process.exit(1);
+    };
     const vertexShaderSource = vertex_file.readToEndAlloc(arena, 10 * 1024) catch unreachable;
 
     const vertexShaderSourceZ = arena.dupeZ(u8, vertexShaderSource);
 
-    const fragment_file = std.fs.openFileAbsolute(full_fragment_path, .{}) catch unreachable;
+    const fragment_file = std.fs.openFileAbsolute(full_fragment_path, .{}) catch |e| {
+        std.log.err("Failed to open fragment shader returned ErrorCode: {s} file path: {s}", .{ @errorName(e), full_vertex_path });
+        std.process.exit(1);
+    };
     const fragmentShaderSource = fragment_file.readToEndAlloc(arena, 10 * 1024) catch unreachable;
 
     const fragmentShaderSourceZ = arena.dupeZ(u8, fragmentShaderSource);
@@ -116,6 +120,6 @@ pub fn setFloat(self: Shader, name: [*c]const u8, value: f32) void {
 }
 
 pub fn setMat4f(self: Shader, name: [*c]const u8, value: [16]f32) void {
-     const matLoc = c.glGetUniformLocation(self.ID, name);
+    const matLoc = c.glGetUniformLocation(self.ID, name);
     c.glUniformMatrix4fv(matLoc, 1, c.GL_TRUE, &value);
 }
