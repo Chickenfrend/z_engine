@@ -98,3 +98,7 @@ fn calculateGreenValue(time: f64) f32 {
     return @sin(timeCasted) / 2.0 + 0.5;
 }
 
+const VertexData = struct {
+    vertices: [12]f32,
+    indices: [6]u32
+};
