@@ -5,6 +5,7 @@
 const std = @import("std");
 const zm = @import("zm");
 const Shader = @import("./rendering/ShaderLib.zig");
+const Square = @import("./rendering/Square.zig");
 const c = @cImport({
     @cDefine("GLFW_INCLUDE_GL", "");
     @cDefine("GL_GLEXT_PROTOTYPES", "");
@@ -18,8 +19,7 @@ const WindowSize = struct {
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
-
-pub fn main() !void {
+pub fn setupWindow() !*c.GLFWWindow {
     _ = c.glfwInit();
     // Without these hints the shaders wouldn't compile. They might need to be changed depending on your system and openGL version.
     _ = c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -29,8 +29,17 @@ pub fn main() !void {
     // I think this is for mac only.
     _ = c.glfwWindowHint(c.GLFW_OPENGL_FORWARD_COMPAT, c.GL_TRUE);
 
-    const window = c.glfwCreateWindow(WindowSize.width, WindowSize.height, "Test Window", null, null);
+    const window = c.glfwCreateWindow(WindowSize.width, WindowSize.height, "Test Window", null, null) orelse {
+        return error.WindowCreationFailed;
+    };
+
     _ = c.glfwMakeContextCurrent(window);
+    return window;
+}
+    
+
+pub fn main() !void {
+    const window = setupWindow();
 
     _ = c.glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
 
@@ -103,7 +112,7 @@ pub fn main() !void {
     // Buffer to store Model and Projection matrices
     var proj: @Vector(16, f32) = undefined;
     // This is the loop that keeps the window open and draws to the screen.
-    c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
+    //c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
     while (c.glfwWindowShouldClose(window) == 0) {
 
         // Input
