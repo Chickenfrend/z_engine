@@ -104,9 +104,16 @@ pub fn main() !void {
     var proj: @Vector(16, f32) = undefined;
     // This is the loop that keeps the window open and draws to the screen.
     c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
-    while (c.glfwWindowShouldClose(window) == 0) {
 
-        // Input
+    var previous: std.time.Instant = std.time.Instant.now() catch unreachable;
+    var lag: u64 = 0;
+    while (c.glfwWindowShouldClose(window) == 0) {
+        var current: std.time.Instant = std.time.Instant.now() catch unreachable;
+        const elapsed: u64 = current.since(previous);
+        previous = current;
+        lag += elapsed;
+ 
+        // Process Input
         processInput(window);
         c.glBindVertexArray(VAO);
 
@@ -115,45 +122,25 @@ pub fn main() !void {
         c.glClear(c.GL_COLOR_BUFFER_BIT);
 
         // Project and positioning.
-        const projM = x: {
-            // This should be changed to use a variable size
-            // const width: f32 = WindowSize.width;
-            // const height: f32 = WindowSize.height;
-            
-            // Orthographic projection - maps directly to screen coordinates
-            const projM = zm.Mat4f.orthographic(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
-            // const projM = zm.Mat4f.identity();
-            break :x projM;
-        };
+        const projM = zm.Mat4f.orthographic(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
         proj = projM.data;
         shaderProgram.use();
         shaderProgram.setMat4f("projection", proj);
 
-
         // Draw the squares
-
         for (square_positions) |square_position| {
             // Translation based on the position
             const square_trans = zm.Mat4f.translation(square_position[0], square_position[1], 0.0);
-            // const identity = zm.Mat4f.identity();
-            const scale = zm.Mat4f.scaling(50.0, 50.0, 1.0);
-            // const scale = identity;
-            //std.debug.print("Square position {d}\n", .{square_position});
-
-            // std.debug.print("Square translation matrix {d}", .{square_trans.data});
+            std.debug.print("Current timestamp nsec: {d}\n", .{@mod(@divTrunc(current.timestamp.nsec, 100_000), 10)});
+            const factor = 0.5*@cos(@as(f32, @floatFromInt(@divTrunc(current.timestamp.nsec, 10000))));
+            const scale = zm.Mat4f.scaling(50.0*factor, 50.0*factor, 1.0);
 
             // You could add rotation and stuff onto this.
             const modelM = square_trans.multiply(scale); 
-            // const modelM = zm.Mat4f.multiply(square_trans, scale);
-            std.debug.print("Translation matrix {d}\n", .{square_trans.data});
-            std.debug.print("Scaling matrix {d}\n", .{scale.data});
-            std.debug.print("Square model {d}\n", .{modelM.data});
 
             shaderProgram.setMat4f("model", modelM.data);
-            const final_matrix_test = projM.multiply(modelM);
-            writeVectorBetter(final_matrix_test);
-            std.debug.print("Ortho {d}\n", .{projM.data});
-            std.debug.print("Final Matrix? {d}\n", .{final_matrix_test.data});
+            //const final_matrix_test = projM.multiply(modelM);
+            //writeVectorBetter(final_matrix_test);
             
             // Draw square using indices
             c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
