@@ -99,23 +99,13 @@ pub fn main() !void {
             // const identity = zm.Mat4f.identity();
             const scale = zm.Mat4f.scaling(50.0, 50.0, 1.0);
             // const scale = identity;
-            //std.debug.print("Square position {d}\n", .{square_position});
 
-            // std.debug.print("Square translation matrix {d}", .{square_trans.data});
 
             // You could add rotation and stuff onto this.
-            const modelM = square_trans.multiply(scale);
-            // const modelM = zm.Mat4f.multiply(square_trans, scale);
-            std.debug.print("Translation matrix {d}\n", .{square_trans.data});
-            std.debug.print("Scaling matrix {d}\n", .{scale.data});
-            std.debug.print("Square model {d}\n", .{modelM.data});
+            const modelM = square_trans.multiply(scale); 
 
             shaderProgram.setMat4f("model", modelM.data);
-            const final_matrix_test = projM.multiply(modelM);
-            writeVectorBetter(final_matrix_test);
-            std.debug.print("Ortho {d}\n", .{projM.data});
-            std.debug.print("Final Matrix? {d}\n", .{final_matrix_test.data});
-
+            
             // Draw square using indices
             geometry.draw();
         }
@@ -137,16 +127,6 @@ fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_in
 fn processInput(window: ?*c.GLFWwindow) void {
     if (c.glfwGetKey(window, c.GLFW_KEY_ESCAPE) == c.GLFW_PRESS) {
         c.glfwSetWindowShouldClose(window, 1);
-    }
-}
-
-fn writeVectorBetter(input: zm.matrix.Mat4Base(f32)) void {
-    const data = input.data;
-    for (0..4) |i| {
-        for (0..4) |j| {
-            std.debug.print("{d}    ", .{data[i * j]});
-        }
-        std.debug.print("\n", .{});
     }
 }
 
