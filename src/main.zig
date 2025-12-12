@@ -32,7 +32,6 @@ pub fn setupWindow() ?*c.GLFWwindow {
     _ = c.glfwMakeContextCurrent(window);
     return window;
 }
-    
 
 pub fn main() !void {
     const window = setupWindow();
@@ -57,7 +56,6 @@ pub fn main() !void {
         .{ 250, 250 },
         .{ 400, 300 },
     };
-
 
     // This is the loop that keeps the window open and draws to the screen.
     //c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
