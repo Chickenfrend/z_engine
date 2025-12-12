@@ -105,11 +105,13 @@ pub fn main() !void {
     // This is the loop that keeps the window open and draws to the screen.
     c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
 
-    var previous: std.time.Instant = std.time.Instant.now() catch unreachable;
-    var lag: u64 = 0;
+    var previous = c.glfwGetTime();
+    var lastTime = c.glfwGetTime();
+    var lag: f64 = 0;
+    var numFrames: u64 = 0;
     while (c.glfwWindowShouldClose(window) == 0) {
-        var current: std.time.Instant = std.time.Instant.now() catch unreachable;
-        const elapsed: u64 = current.since(previous);
+        const current = c.glfwGetTime();
+        const elapsed = current - previous;
         previous = current;
         lag += elapsed;
 
@@ -140,37 +142,26 @@ pub fn main() !void {
         for (square_positions) |square_position| {
             // Translation based on the position
             const square_trans = zm.Mat4f.translation(square_position[0], square_position[1], 0.0);
-            std.debug.print("Current timestamp nsec: {d}\n", .{@mod(@divTrunc(current.timestamp.nsec, 100_000), 10)});
-            const factor = 0.5*@cos(@as(f32, @floatFromInt(@divTrunc(current.timestamp.nsec, 10000))));
-            const scale = zm.Mat4f.scaling(50.0*factor, 50.0*factor, 1.0);
+            //std.debug.print("Current timestamp nsec: {d}\n", .{@mod(@divTrunc(current, 1_000), 10)});
+            const factor = 0.5 * @cos(@divTrunc(current, 1_000));
+            const scale = zm.Mat4f.scaling(@floatCast(50.0 * factor), @floatCast(50.0 * factor), 1.0);
 
             // You could add rotation and stuff onto this.
-<<<<<<< HEAD
             const modelM = square_trans.multiply(scale);
-
             shaderProgram.setMat4f("model", modelM.data);
-            //const final_matrix_test = projM.multiply(modelM);
-            //writeVectorBetter(final_matrix_test);
 
-=======
-            const modelM = square_trans.multiply(scale);
-            // const modelM = zm.Mat4f.multiply(square_trans, scale);
-            std.debug.print("Translation matrix {d}\n", .{square_trans.data});
-            std.debug.print("Scaling matrix {d}\n", .{scale.data});
-            std.debug.print("Square model {d}\n", .{modelM.data});
-
-            shaderProgram.setMat4f("model", modelM.data);
-            const final_matrix_test = projM.multiply(modelM);
-            writeVectorBetter(final_matrix_test);
-            std.debug.print("Ortho {d}\n", .{projM.data});
-            std.debug.print("Final Matrix? {d}\n", .{final_matrix_test.data});
-
->>>>>>> main
             // Draw square using indices
             c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
         }
 
+        if (current - lastTime >= 1.0) { // If last prinf() was more than 1 sec ago
+            // printf and reset timer
+            std.debug.print("{d} fps\n", .{numFrames});
+            numFrames = 0;
+            lastTime += 1.0;
+        }
         c.glfwSwapBuffers(window);
+        numFrames += 1;
         c.glfwPollEvents();
     }
 
@@ -187,16 +178,6 @@ fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_in
 fn processInput(window: ?*c.GLFWwindow) void {
     if (c.glfwGetKey(window, c.GLFW_KEY_ESCAPE) == c.GLFW_PRESS) {
         c.glfwSetWindowShouldClose(window, 1);
-    }
-}
-
-fn writeVectorBetter(input: zm.matrix.Mat4Base(f32)) void {
-    const data = input.data;
-    for (0..4) |i| {
-        for (0..4) |j| {
-            std.debug.print("{d}    ", .{data[i * j]});
-        }
-        std.debug.print("\n", .{});
     }
 }
 
