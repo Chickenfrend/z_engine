@@ -7,7 +7,7 @@ const zm = @import("zm");
 const Shader = @import("./rendering/ShaderLib.zig");
 const c = @cImport({
     @cDefine("GLFW_INCLUDE_GL", "");
-    @cDefine("GL_GLEXT_PROTOTYPES", "");    
+    @cDefine("GL_GLEXT_PROTOTYPES", "");
     @cInclude("GLFW/glfw3.h");
 });
 
@@ -41,7 +41,7 @@ pub fn main() !void {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
     // This is the creation of the shader program.
-    const shaderProgram: Shader = Shader.create(arena_allocator, "src/rendering/shaders/position_shader.vs", "src/rendering/shaders/triangle_shader.fs");
+    const shaderProgram: Shader = Shader.create(arena_allocator, "src/rendering/shaders/position_shader.vs", "src/rendering/shaders/triangle_shader.frag");
 
     // These are the twelve vertices that make up the square.
     const vertices = [12]f32{
@@ -64,11 +64,11 @@ pub fn main() !void {
         1, 2, 3,
     };
     const square_positions = [_][2]f32{
-        .{100, 200},
-        .{0, 0},
-        .{750, 550},
-        .{250, 250},
-        .{400, 300},
+        .{ 100, 200 },
+        .{ 0, 0 },
+        .{ 750, 550 },
+        .{ 250, 250 },
+        .{ 400, 300 },
     };
 
     // This is the vertex buffer id, the vertex array object id, and the element buffer object ID. Later we assign a vertex buffer to the vertex buffer id.
@@ -112,7 +112,7 @@ pub fn main() !void {
         const elapsed: u64 = current.since(previous);
         previous = current;
         lag += elapsed;
- 
+
         // Process Input
         processInput(window);
         c.glBindVertexArray(VAO);
@@ -122,7 +122,16 @@ pub fn main() !void {
         c.glClear(c.GL_COLOR_BUFFER_BIT);
 
         // Project and positioning.
-        const projM = zm.Mat4f.orthographic(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
+        const projM = x: {
+            // This should be changed to use a variable size
+            // const width: f32 = WindowSize.width;
+            // const height: f32 = WindowSize.height;
+
+            // Orthographic projection - maps directly to screen coordinates
+            const projM = zm.Mat4f.orthographic(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
+            // const projM = zm.Mat4f.identity();
+            break :x projM;
+        };
         proj = projM.data;
         shaderProgram.use();
         shaderProgram.setMat4f("projection", proj);
@@ -136,12 +145,27 @@ pub fn main() !void {
             const scale = zm.Mat4f.scaling(50.0*factor, 50.0*factor, 1.0);
 
             // You could add rotation and stuff onto this.
-            const modelM = square_trans.multiply(scale); 
+<<<<<<< HEAD
+            const modelM = square_trans.multiply(scale);
 
             shaderProgram.setMat4f("model", modelM.data);
             //const final_matrix_test = projM.multiply(modelM);
             //writeVectorBetter(final_matrix_test);
-            
+
+=======
+            const modelM = square_trans.multiply(scale);
+            // const modelM = zm.Mat4f.multiply(square_trans, scale);
+            std.debug.print("Translation matrix {d}\n", .{square_trans.data});
+            std.debug.print("Scaling matrix {d}\n", .{scale.data});
+            std.debug.print("Square model {d}\n", .{modelM.data});
+
+            shaderProgram.setMat4f("model", modelM.data);
+            const final_matrix_test = projM.multiply(modelM);
+            writeVectorBetter(final_matrix_test);
+            std.debug.print("Ortho {d}\n", .{projM.data});
+            std.debug.print("Final Matrix? {d}\n", .{final_matrix_test.data});
+
+>>>>>>> main
             // Draw square using indices
             c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
         }
@@ -170,9 +194,9 @@ fn writeVectorBetter(input: zm.matrix.Mat4Base(f32)) void {
     const data = input.data;
     for (0..4) |i| {
         for (0..4) |j| {
-            std.debug.print("{d}    ", .{data[i*j]});
+            std.debug.print("{d}    ", .{data[i * j]});
         }
-        std.debug.print("\n", . {});
+        std.debug.print("\n", .{});
     }
 }
 
