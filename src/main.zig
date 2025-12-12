@@ -19,7 +19,7 @@ const WindowSize = struct {
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
-pub fn setupWindow() !*c.GLFWWindow {
+pub fn setupWindow() ?*c.GLFWwindow {
     _ = c.glfwInit();
     // Without these hints the shaders wouldn't compile. They might need to be changed depending on your system and openGL version.
     _ = c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -30,7 +30,7 @@ pub fn setupWindow() !*c.GLFWWindow {
     _ = c.glfwWindowHint(c.GLFW_OPENGL_FORWARD_COMPAT, c.GL_TRUE);
 
     const window = c.glfwCreateWindow(WindowSize.width, WindowSize.height, "Test Window", null, null) orelse {
-        return error.WindowCreationFailed;
+        @panic("Could not open window!");
     };
 
     _ = c.glfwMakeContextCurrent(window);
@@ -52,26 +52,8 @@ pub fn main() !void {
     // This is the creation of the shader program.
     const shaderProgram: Shader = Shader.create(arena_allocator, "src/rendering/shaders/position_shader.vs", "src/rendering/shaders/triangle_shader.frag");
 
-    // These are the twelve vertices that make up the square.
-    const vertices = [12]f32{
-        0.5,
-        0.5,
-        0.0,
-        0.5,
-        -0.5,
-        0.0,
-        -0.5,
-        -0.5,
-        0.0,
-        -0.5,
-        0.5,
-        0.0,
-    };
-    // These are the indices for the two triangles that make up the square.
-    const indices = [6]u32{
-        0, 1, 3,
-        1, 2, 3,
-    };
+    var geometry = Square.SquareGeometry.init();
+
     const square_positions = [_][2]f32{
         .{ 100, 200 },
         .{ 0, 0 },
@@ -80,34 +62,6 @@ pub fn main() !void {
         .{ 400, 300 },
     };
 
-    // This is the vertex buffer id, the vertex array object id, and the element buffer object ID. Later we assign a vertex buffer to the vertex buffer id.
-    // The vertex buffer lets us send a lot of vertex information to the GPU at once.
-    var VBO: c_uint = undefined;
-    var VAO: c_uint = undefined;
-    var EBO: c_uint = undefined;
-    c.glGenVertexArrays(1, &VAO);
-    defer c.glDeleteVertexArrays(1, &VAO);
-    c.glGenBuffers(1, &VBO);
-    defer c.glDeleteBuffers(1, &VBO);
-    c.glGenBuffers(1, &EBO);
-    defer c.glDeleteBuffers(1, &EBO);
-
-    // We start by binding the vertex array object.
-    c.glBindVertexArray(VAO);
-
-    // Then we bind the vertex buffer object. This is where we send the vertex data to the GPU.
-    c.glBindBuffer(c.GL_ARRAY_BUFFER, VBO);
-    c.glBufferData(c.GL_ARRAY_BUFFER, @sizeOf(f32) * vertices.len, &vertices, c.GL_STATIC_DRAW);
-
-    // Now we bind the element buffer object. This is where we send the indices to the GPU.
-    c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, EBO);
-    c.glBufferData(c.GL_ELEMENT_ARRAY_BUFFER, @sizeOf(u32) * indices.len, &indices, c.GL_STATIC_DRAW);
-
-    // This tells openGL how to interpret the vertex data. It defines the layout of the vertex data in the buffer.
-    // These parameters are confusing. But, info on them can be found here: https://learnopengl.com/Getting-started/Hello-Triangle
-    // I'll just say that the 3 is because we're using vec3
-    c.glVertexAttribPointer(0, 3, c.GL_FLOAT, c.GL_FALSE, 3 * @sizeOf(f32), null);
-    c.glEnableVertexAttribArray(0);
 
     // Buffer to store Model and Projection matrices
     var proj: @Vector(16, f32) = undefined;
@@ -117,7 +71,6 @@ pub fn main() !void {
 
         // Input
         processInput(window);
-        c.glBindVertexArray(VAO);
 
         // Render
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -164,7 +117,7 @@ pub fn main() !void {
             std.debug.print("Final Matrix? {d}\n", .{final_matrix_test.data});
 
             // Draw square using indices
-            c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
+            geometry.draw();
         }
 
         c.glfwSwapBuffers(window);

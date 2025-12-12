@@ -5,7 +5,7 @@ const c = @cImport({
     @cInclude("GLFW/glfw3.h");
 });
 
-const SquareGeometry = struct {
+pub const SquareGeometry = struct {
     VAO: c_uint,
     VBO: c_uint,
     EBO: c_uint,
@@ -22,7 +22,7 @@ const SquareGeometry = struct {
         1, 2, 3,
     };
     
-    fn init() SquareGeometry {
+    pub fn init() SquareGeometry {
         var geo: SquareGeometry = undefined;
         
         c.glGenVertexArrays(1, &geo.VAO);
@@ -43,18 +43,18 @@ const SquareGeometry = struct {
         return geo;
     }
     
-    fn deinit(self: *SquareGeometry) void {
+    pub fn deinit(self: *SquareGeometry) void {
         c.glDeleteVertexArrays(1, &self.VAO);
         c.glDeleteBuffers(1, &self.VBO);
         c.glDeleteBuffers(1, &self.EBO);
     }
     
-    fn draw(self: *const SquareGeometry) void {
+    pub fn draw(self: *const SquareGeometry) void {
         c.glBindVertexArray(self.VAO);
         c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
     }
 };
-const Square = struct {
+pub const Square = struct {
     position: [2]f32,
     width: f32,
     length: f32,
