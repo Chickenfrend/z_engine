@@ -99,6 +99,6 @@ fn calculateGreenValue(time: f64) f32 {
 }
 
 const VertexData = struct {
-    vertices: [12]f32,
-    indices: [6]u32
+    vertices: []f32,
+    indices: []u32
 };
