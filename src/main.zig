@@ -105,15 +105,16 @@ pub fn main() !void {
     // This is the loop that keeps the window open and draws to the screen.
     c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
 
-    var previous = c.glfwGetTime();
-    var lastTime = c.glfwGetTime();
-    var lag: f64 = 0;
-    var numFrames: u64 = 0;
+    var timer = std.time.Timer.start() catch |err| {
+        std.debug.panic("Couldn't find timer!: {s}\n", .{@errorName(err)});
+    };
+    var num_frames: u64 = 0;
+    var total_elapsed_ns: u64 = 0;
+    var elapsed_ms: u64 = 0;
     while (c.glfwWindowShouldClose(window) == 0) {
-        const current = c.glfwGetTime();
-        const elapsed = current - previous;
-        previous = current;
-        lag += elapsed;
+        const loop_elapsed_ns = timer.lap();
+        total_elapsed_ns += loop_elapsed_ns;
+        elapsed_ms += loop_elapsed_ns / std.time.ns_per_ms;
 
         // Process Input
         processInput(window);
@@ -143,8 +144,8 @@ pub fn main() !void {
             // Translation based on the position
             const square_trans = zm.Mat4f.translation(square_position[0], square_position[1], 0.0);
             //std.debug.print("Current timestamp nsec: {d}\n", .{@mod(@divTrunc(current, 1_000), 10)});
-            const factor = 0.5 * @cos(@divTrunc(current, 1_000));
-            const scale = zm.Mat4f.scaling(@floatCast(50.0 * factor), @floatCast(50.0 * factor), 1.0);
+            const factor: f32 = @floatCast(0.5 * @cos(@as(f32, @floatFromInt(@divTrunc(total_elapsed_ns, 250 * std.time.ns_per_s)))));
+            const scale = zm.Mat4f.scaling(50.0 * factor, 50.0 * factor, 1.0);
 
             // You could add rotation and stuff onto this.
             const modelM = square_trans.multiply(scale);
@@ -154,14 +155,13 @@ pub fn main() !void {
             c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
         }
 
-        if (current - lastTime >= 1.0) { // If last prinf() was more than 1 sec ago
-            // printf and reset timer
-            std.debug.print("{d} fps\n", .{numFrames});
-            numFrames = 0;
-            lastTime += 1.0;
+        if ((elapsed_ms / std.time.ms_per_s) >= 1.0) {
+            std.debug.print("{d} fps\n", .{num_frames});
+            num_frames = 0;
+            elapsed_ms = 0;
         }
         c.glfwSwapBuffers(window);
-        numFrames += 1;
+        num_frames += 1;
         c.glfwPollEvents();
     }
 
