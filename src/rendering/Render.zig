@@ -98,3 +98,9 @@ fn calculateGreenValue(time: f64) f32 {
     return @sin(timeCasted) / 2.0 + 0.5;
 }
 
+// Changed this to slices so it isn't hard coded.
+// But before it was 12 and 6. Not sure if this will create performance issues.
+const VertexData = struct {
+    vertices: []f32,
+    indices: []u32
+};

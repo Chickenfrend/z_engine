@@ -5,6 +5,7 @@
 const std = @import("std");
 const zm = @import("zm");
 const Shader = @import("./rendering/ShaderLib.zig");
+const Square = @import("./rendering/Square.zig");
 const c = @cImport({
     @cDefine("GLFW_INCLUDE_GL", "");
     @cDefine("GL_GLEXT_PROTOTYPES", "");
@@ -18,8 +19,7 @@ const WindowSize = struct {
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
-
-pub fn main() !void {
+pub fn setupWindow() ?*c.GLFWwindow {
     _ = c.glfwInit();
     // Without these hints the shaders wouldn't compile. They might need to be changed depending on your system and openGL version.
     _ = c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -29,8 +29,17 @@ pub fn main() !void {
     // I think this is for mac only.
     _ = c.glfwWindowHint(c.GLFW_OPENGL_FORWARD_COMPAT, c.GL_TRUE);
 
-    const window = c.glfwCreateWindow(WindowSize.width, WindowSize.height, "Test Window", null, null);
+    const window = c.glfwCreateWindow(WindowSize.width, WindowSize.height, "Test Window", null, null) orelse {
+        @panic("Could not open window!");
+    };
+
     _ = c.glfwMakeContextCurrent(window);
+    return window;
+}
+    
+
+pub fn main() !void {
+    const window = setupWindow();
 
     _ = c.glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
 
@@ -43,26 +52,8 @@ pub fn main() !void {
     // This is the creation of the shader program.
     const shaderProgram: Shader = Shader.create(arena_allocator, "src/rendering/shaders/position_shader.vs", "src/rendering/shaders/triangle_shader.frag");
 
-    // These are the twelve vertices that make up the square.
-    const vertices = [12]f32{
-        0.5,
-        0.5,
-        0.0,
-        0.5,
-        -0.5,
-        0.0,
-        -0.5,
-        -0.5,
-        0.0,
-        -0.5,
-        0.5,
-        0.0,
-    };
-    // These are the indices for the two triangles that make up the square.
-    const indices = [6]u32{
-        0, 1, 3,
-        1, 2, 3,
-    };
+    var geometry = Square.SquareGeometry.init();
+
     const square_positions = [_][2]f32{
         .{ 100, 200 },
         .{ 0, 0 },
@@ -71,44 +62,15 @@ pub fn main() !void {
         .{ 400, 300 },
     };
 
-    // This is the vertex buffer id, the vertex array object id, and the element buffer object ID. Later we assign a vertex buffer to the vertex buffer id.
-    // The vertex buffer lets us send a lot of vertex information to the GPU at once.
-    var VBO: c_uint = undefined;
-    var VAO: c_uint = undefined;
-    var EBO: c_uint = undefined;
-    c.glGenVertexArrays(1, &VAO);
-    defer c.glDeleteVertexArrays(1, &VAO);
-    c.glGenBuffers(1, &VBO);
-    defer c.glDeleteBuffers(1, &VBO);
-    c.glGenBuffers(1, &EBO);
-    defer c.glDeleteBuffers(1, &EBO);
-
-    // We start by binding the vertex array object.
-    c.glBindVertexArray(VAO);
-
-    // Then we bind the vertex buffer object. This is where we send the vertex data to the GPU.
-    c.glBindBuffer(c.GL_ARRAY_BUFFER, VBO);
-    c.glBufferData(c.GL_ARRAY_BUFFER, @sizeOf(f32) * vertices.len, &vertices, c.GL_STATIC_DRAW);
-
-    // Now we bind the element buffer object. This is where we send the indices to the GPU.
-    c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, EBO);
-    c.glBufferData(c.GL_ELEMENT_ARRAY_BUFFER, @sizeOf(u32) * indices.len, &indices, c.GL_STATIC_DRAW);
-
-    // This tells openGL how to interpret the vertex data. It defines the layout of the vertex data in the buffer.
-    // These parameters are confusing. But, info on them can be found here: https://learnopengl.com/Getting-started/Hello-Triangle
-    // I'll just say that the 3 is because we're using vec3
-    c.glVertexAttribPointer(0, 3, c.GL_FLOAT, c.GL_FALSE, 3 * @sizeOf(f32), null);
-    c.glEnableVertexAttribArray(0);
 
     // Buffer to store Model and Projection matrices
     var proj: @Vector(16, f32) = undefined;
     // This is the loop that keeps the window open and draws to the screen.
-    c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
+    //c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
     while (c.glfwWindowShouldClose(window) == 0) {
 
         // Input
         processInput(window);
-        c.glBindVertexArray(VAO);
 
         // Render
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -137,25 +99,15 @@ pub fn main() !void {
             // const identity = zm.Mat4f.identity();
             const scale = zm.Mat4f.scaling(50.0, 50.0, 1.0);
             // const scale = identity;
-            //std.debug.print("Square position {d}\n", .{square_position});
 
-            // std.debug.print("Square translation matrix {d}", .{square_trans.data});
 
             // You could add rotation and stuff onto this.
-            const modelM = square_trans.multiply(scale);
-            // const modelM = zm.Mat4f.multiply(square_trans, scale);
-            std.debug.print("Translation matrix {d}\n", .{square_trans.data});
-            std.debug.print("Scaling matrix {d}\n", .{scale.data});
-            std.debug.print("Square model {d}\n", .{modelM.data});
+            const modelM = square_trans.multiply(scale); 
 
             shaderProgram.setMat4f("model", modelM.data);
-            const final_matrix_test = projM.multiply(modelM);
-            writeVectorBetter(final_matrix_test);
-            std.debug.print("Ortho {d}\n", .{projM.data});
-            std.debug.print("Final Matrix? {d}\n", .{final_matrix_test.data});
-
+            
             // Draw square using indices
-            c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
+            geometry.draw();
         }
 
         c.glfwSwapBuffers(window);
@@ -175,16 +127,6 @@ fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_in
 fn processInput(window: ?*c.GLFWwindow) void {
     if (c.glfwGetKey(window, c.GLFW_KEY_ESCAPE) == c.GLFW_PRESS) {
         c.glfwSetWindowShouldClose(window, 1);
-    }
-}
-
-fn writeVectorBetter(input: zm.matrix.Mat4Base(f32)) void {
-    const data = input.data;
-    for (0..4) |i| {
-        for (0..4) |j| {
-            std.debug.print("{d}    ", .{data[i * j]});
-        }
-        std.debug.print("\n", .{});
     }
 }
 
