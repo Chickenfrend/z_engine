@@ -6,16 +6,12 @@ const std = @import("std");
 const zm = @import("zm");
 const Shader = @import("./rendering/ShaderLib.zig");
 const Square = @import("./rendering/Square.zig");
+const Renderer = @import("./rendering/Render.zig");
 const c = @cImport({
     @cDefine("GLFW_INCLUDE_GL", "");
     @cDefine("GL_GLEXT_PROTOTYPES", "");
     @cInclude("GLFW/glfw3.h");
 });
-
-const WindowSize = struct {
-    pub const width: u32 = 800;
-    pub const height: u32 = 600;
-};
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
@@ -29,7 +25,7 @@ pub fn setupWindow() ?*c.GLFWwindow {
     // I think this is for mac only.
     _ = c.glfwWindowHint(c.GLFW_OPENGL_FORWARD_COMPAT, c.GL_TRUE);
 
-    const window = c.glfwCreateWindow(WindowSize.width, WindowSize.height, "Test Window", null, null) orelse {
+    const window = c.glfwCreateWindow(Renderer.WindowSize.width, Renderer.WindowSize.height, "Test Window", null, null) orelse {
         @panic("Could not open window!");
     };
 
@@ -50,9 +46,9 @@ pub fn main() !void {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
     // This is the creation of the shader program.
-    const shaderProgram: Shader = Shader.create(arena_allocator, "src/rendering/shaders/position_shader.vs", "src/rendering/shaders/triangle_shader.frag");
+    var render_pipeline = Renderer.RenderPipeline.init(arena_allocator);
 
-    var geometry = Square.SquareGeometry.init();
+    const geometry = Square.SquareGeometry.init();
 
     const square_positions = [_][2]f32{
         .{ 100, 200 },
@@ -63,8 +59,6 @@ pub fn main() !void {
     };
 
 
-    // Buffer to store Model and Projection matrices
-    var proj: @Vector(16, f32) = undefined;
     // This is the loop that keeps the window open and draws to the screen.
     //c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
     while (c.glfwWindowShouldClose(window) == 0) {
@@ -76,39 +70,7 @@ pub fn main() !void {
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
 
-        // Project and positioning.
-        const projM = x: {
-            // This should be changed to use a variable size
-            // const width: f32 = WindowSize.width;
-            // const height: f32 = WindowSize.height;
-
-            // Orthographic projection - maps directly to screen coordinates
-            const projM = zm.Mat4f.orthographic(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
-            // const projM = zm.Mat4f.identity();
-            break :x projM;
-        };
-        proj = projM.data;
-        shaderProgram.use();
-        shaderProgram.setMat4f("projection", proj);
-
-        // Draw the squares
-
-        for (square_positions) |square_position| {
-            // Translation based on the position
-            const square_trans = zm.Mat4f.translation(square_position[0], square_position[1], 0.0);
-            // const identity = zm.Mat4f.identity();
-            const scale = zm.Mat4f.scaling(50.0, 50.0, 1.0);
-            // const scale = identity;
-
-
-            // You could add rotation and stuff onto this.
-            const modelM = square_trans.multiply(scale); 
-
-            shaderProgram.setMat4f("model", modelM.data);
-            
-            // Draw square using indices
-            geometry.draw();
-        }
+        try render_pipeline.render(geometry, &square_positions);
 
         c.glfwSwapBuffers(window);
         c.glfwPollEvents();
