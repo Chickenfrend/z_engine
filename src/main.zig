@@ -85,7 +85,7 @@ pub fn main() !void {
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
 
-        try render_pipeline.render(geometry, &square_positions);
+        try render_pipeline.render(geometry, &square_positions, total_elapsed_ns);
 
         if (total_elapsed_ns / std.time.ns_per_s > last_second) {
             std.debug.print("{d} fps\n", .{num_frames});

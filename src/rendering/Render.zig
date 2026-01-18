@@ -17,8 +17,7 @@ pub const WindowSize = struct {
     pub const height: u32 = 600;
 };
 
-
-// Rendering is currently only rendering squares. We should modify this and 
+// Rendering is currently only rendering squares. We should modify this and
 // add batch rendering.
 //
 // An easy thing to do would be to add some kind of abstract geometry struct.
@@ -27,7 +26,7 @@ pub const RenderPipeline = struct {
     projection: @Vector(16, f32),
 
     // The square geometry should be changed when we implement sprites. Probably.
-    pub fn render(self: RenderPipeline, geometry: Square.SquareGeometry, positions: []const [2]f32, ) !void {
+    pub fn render(self: RenderPipeline, geometry: Square.SquareGeometry, positions: []const [2]f32, elapsed_ns: u64) !void {
         // Render
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
@@ -36,18 +35,18 @@ pub const RenderPipeline = struct {
         self.shader.use();
         self.shader.setMat4f("projection", self.projection);
 
+        const ns_per_cycle: f32 = 10 * std.time.ns_per_s;
         for (positions) |position| {
             const square_trans = zm.Mat4f.translation(position[0], position[1], 0.0);
-            // const identity = zm.Mat4f.identity();
-            const scale = zm.Mat4f.scaling(50.0, 50.0, 1.0);
-            // const scale = identity;
-
+            const factor: f32 = @floatCast(0.5 *
+                @cos(2 * std.math.pi * @as(f32, @floatFromInt(elapsed_ns)) / ns_per_cycle));
+            const scale = zm.Mat4f.scaling(50.0 * factor, 50.0 * factor, 1.0);
 
             // You could add rotation and stuff onto this.
-            const modelM = square_trans.multiply(scale); 
+            const modelM = square_trans.multiply(scale);
 
             self.shader.setMat4f("model", modelM.data);
-            
+
             // Draw square using indices
             geometry.draw();
         }
@@ -56,15 +55,12 @@ pub const RenderPipeline = struct {
     pub fn init(allocator: std.mem.Allocator) RenderPipeline {
         const shaderProgram: Shader = Shader.create(allocator, "src/rendering/shaders/position_shader.vs", "src/rendering/shaders/triangle_shader.frag");
 
-
         const projM = zm.Mat4f.orthographic(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
 
-        
         return RenderPipeline{
-            .shader=shaderProgram,
-            .projection=projM.data,
+            .shader = shaderProgram,
+            .projection = projM.data,
         };
-
     }
 
     pub fn cleanup(self: RenderPipeline) !void {
@@ -73,7 +69,6 @@ pub const RenderPipeline = struct {
         defer c.glDeleteBuffers(1, &self.ebo);
     }
 };
-
 
 fn calculateGreenValue(time: f64) f32 {
     const timeCasted: f32 = @floatCast(time);
@@ -84,5 +79,5 @@ fn calculateGreenValue(time: f64) f32 {
 // But before it was 12 and 6. Not sure if this will create performance issues.
 const VertexData = struct {
     vertices: []f32,
-    indices: []u32
+    indices: []u32,
 };
