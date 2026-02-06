@@ -54,10 +54,10 @@ pub fn main() !void {
 
     const square_positions = [_][2]f32{
         .{ 100, 200 },
-        .{ 0, 0 },
-        .{ 750, 550 },
-        .{ 250, 250 },
-        .{ 400, 300 },
+        // .{ 0, 0 },
+        // .{ 750, 550 },
+        // .{ 250, 250 },
+        // .{ 400, 300 },
     };
 
     var global_state: state.GlobalState = .{
@@ -102,7 +102,7 @@ pub fn main() !void {
     return;
 }
 
-fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
+fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.c) void {
     _ = window;
     c.glViewport(0, 0, width, height);
 }

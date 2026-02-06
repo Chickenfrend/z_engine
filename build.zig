@@ -87,13 +87,21 @@ pub fn build(b: *std.Build) void {
     exe.linkSystemLibrary("glfw");
     exe.linkLibC();
 
-        const install_content_step = b.addInstallDirectory(.{
+    const install_content_step = b.addInstallDirectory(.{
         .source_dir = b.path(thisDir() ++ "/" ++ shader_dir),
         .install_dir = .{ .custom = "" },
         .install_subdir = "bin/" ++ shader_dir,
     });
 
     exe.step.dependOn(&install_content_step.step);
+
+    // zigimg dependency
+    const zigimg_dependency = b.dependency("zigimg", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    exe_mod.addImport("zigimg", zigimg_dependency.module("zigimg"));
 
     const zm = b.dependency("zm", .{
         .target = target,

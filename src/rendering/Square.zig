@@ -10,11 +10,12 @@ pub const SquareGeometry = struct {
     VBO: c_uint,
     EBO: c_uint,
     
-    const vertices = [12]f32{
-        0.5, 0.5, 0.0,
-        0.5, -0.5, 0.0,
-        -0.5, -0.5, 0.0,
-        -0.5, 0.5, 0.0,
+    // Position (x, y, z) + UV (u, v)
+    const vertices = [20]f32{
+        0.5,  0.5,  0.0,  1.0, 1.0,  // top right
+        0.5,  -0.5, 0.0,  1.0, 0.0,  // bottom right
+        -0.5, -0.5, 0.0,  0.0, 0.0,  // bottom left
+        -0.5, 0.5,  0.0,  0.0, 1.0,  // top left
     };
     
     const indices = [6]u32{
@@ -37,8 +38,12 @@ pub const SquareGeometry = struct {
         c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, geo.EBO);
         c.glBufferData(c.GL_ELEMENT_ARRAY_BUFFER, @sizeOf(@TypeOf(indices)), &indices, c.GL_STATIC_DRAW);
         
-        c.glVertexAttribPointer(0, 3, c.GL_FLOAT, c.GL_FALSE, 3 * @sizeOf(f32), null);
+        // Position attribute
+        c.glVertexAttribPointer(0, 3, c.GL_FLOAT, c.GL_FALSE, 5 * @sizeOf(f32), null);
         c.glEnableVertexAttribArray(0);
+        // UV attribute
+        c.glVertexAttribPointer(1, 2, c.GL_FLOAT, c.GL_FALSE, 5 * @sizeOf(f32), @ptrFromInt(3 * @sizeOf(f32)));
+        c.glEnableVertexAttribArray(1);
         
         return geo;
     }
