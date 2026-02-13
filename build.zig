@@ -76,15 +76,20 @@ pub fn build(b: *std.Build) void {
         exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/include" });
         exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/include" });
         exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-headers/include" });
+        exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/freetype/include/freetype2" });
 
         // Add library paths
         exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/glfw/lib" });
         exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/lib" });
+        exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/freetype/lib" });
         exe.linkFramework("OpenGL");
     } else {
         exe.linkSystemLibrary("GL");
+        // Add FreeType include path for Linux
+        exe.addIncludePath(.{ .cwd_relative = "/usr/include/freetype2" });
     }
     exe.linkSystemLibrary("glfw");
+    exe.linkSystemLibrary("freetype2");
     exe.linkLibC();
 
     const install_content_step = b.addInstallDirectory(.{
