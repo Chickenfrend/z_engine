@@ -7,11 +7,22 @@ const std = @import("std");
 const zm = @import("zm");
 const zigimg = @import("zigimg");
 
-const c = @cImport({
-    @cDefine("GLFW_INCLUDE_GL", "");
-    @cDefine("GL_GLEXT_PROTOTYPES", "");
-    @cInclude("GLFW/glfw3.h");
-});
+const builtin = @import("builtin");
+
+const c = if (builtin.os.tag == .macos)
+    @cImport({
+        @cDefine("GLFW_INCLUDE_NONE", "");
+        @cInclude("GLFW/glfw3.h");
+        @cInclude("OpenGL/gl3.h");
+    })
+else
+    @cImport({
+        @cDefine("GLFW_INCLUDE_NONE", "");
+        @cDefine("GL_GLEXT_PROTOTYPES", "");
+        @cInclude("GLFW/glfw3.h");
+        @cInclude("GL/gl.h");
+        @cInclude("GL/glext.h");
+    });
 
 pub const WindowSize = struct {
     pub const width: u32 = 800;
@@ -31,7 +42,7 @@ pub const RenderPipeline = struct {
     projection: [4][4]f32,
 
     // The square geometry should be changed when we implement sprites. Probably.
-    pub fn render(self: RenderPipeline, geometry: Square.SquareGeometry, positions: []const [2]f32, elapsed_ns: u64) !void {
+    pub fn render(self: RenderPipeline, geometry: Square.SquareGeometry, positions: []const [2]f32) !void {
         // Render
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
@@ -40,12 +51,9 @@ pub const RenderPipeline = struct {
         self.shader.use();
         self.shader.setMat4f("projection", flattenMat4(self.projection));
 
-        const ns_per_cycle: f32 = 10 * std.time.ns_per_s;
         for (positions) |position| {
             const square_trans = zm.Mat4f.translation(position[0], position[1], 0.0);
-            const factor: f32 = @floatCast(0.8 *
-                @cos(2 * std.math.pi * @as(f32, @floatFromInt(elapsed_ns)) / ns_per_cycle));
-            const scale = zm.Mat4f.scaling(300.0 * factor, 300.0 * factor, 1.0);
+            const scale = zm.Mat4f.scaling(300.0, 300.0, 1.0);
 
             // You could add rotation and stuff onto this.
             const modelM = square_trans.multiply(scale);
@@ -58,7 +66,11 @@ pub const RenderPipeline = struct {
     }
 
     pub fn init(allocator: std.mem.Allocator) RenderPipeline {
-        const shaderProgram: Shader = Shader.create(allocator, "src/rendering/shaders/position_shader.vs", "src/rendering/shaders/triangle_shader.frag");
+        const shaderProgram: Shader = Shader.create(
+            allocator,
+            "src/rendering/shaders/position_shader.vs",
+            "src/rendering/shaders/triangle_shader.frag",
+        );
 
         // TODO refactor texture loading
         var read_buffer: [zigimg.io.DEFAULT_BUFFER_SIZE]u8 = undefined;
@@ -80,17 +92,28 @@ pub const RenderPipeline = struct {
         c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
 
         // Upload image data to GPU
-        const img_data = image.pixels.rgb24;
+        c.glPixelStorei(c.GL_UNPACK_ALIGNMENT, 1);
+
+        const gl_format: c.GLint, const img_ptr: ?*const anyopaque = switch (image.pixels) {
+            .grayscale8 => |data| .{ c.GL_RED, @ptrCast(data.ptr) },
+            .rgb24 => |data| .{ c.GL_RGB, @ptrCast(data.ptr) },
+            .rgba32 => |data| .{ c.GL_RGBA, @ptrCast(data.ptr) },
+            else => {
+                std.debug.print("Unsupported pixel format: {}\n", .{image.pixels});
+                std.process.exit(1);
+            },
+        };
+
         c.glTexImage2D(
             c.GL_TEXTURE_2D,
             0,
-            c.GL_RGB,
+            gl_format,
             @intCast(image.width),
             @intCast(image.height),
             0,
-            c.GL_RGB,
+            @intCast(gl_format),
             c.GL_UNSIGNED_BYTE,
-            @ptrCast(img_data.ptr),
+            img_ptr,
         );
         std.debug.print("Loaded texture: {}x{}\n", .{ image.width, image.height });
 

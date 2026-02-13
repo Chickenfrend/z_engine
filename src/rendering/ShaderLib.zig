@@ -2,11 +2,22 @@
 
 const std = @import("std");
 
-const c = @cImport({
-    @cDefine("GLFW_INCLUDE_GL", "");
-    @cDefine("GL_GLEXT_PROTOTYPES", "");
-    @cInclude("GLFW/glfw3.h");
-});
+const builtin = @import("builtin");
+
+const c = if (builtin.os.tag == .macos)
+    @cImport({
+        @cDefine("GLFW_INCLUDE_NONE", "");
+        @cInclude("GLFW/glfw3.h");
+        @cInclude("OpenGL/gl3.h");
+    })
+else
+    @cImport({
+        @cDefine("GLFW_INCLUDE_NONE", "");
+        @cDefine("GL_GLEXT_PROTOTYPES", "");
+        @cInclude("GLFW/glfw3.h");
+        @cInclude("GL/gl.h");
+        @cInclude("GL/glext.h");
+    });
 
 const Shader = @This();
 

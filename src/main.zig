@@ -5,11 +5,22 @@
 const std = @import("std");
 const zm = @import("zm");
 
-const c = @cImport({
-    @cDefine("GLFW_INCLUDE_GL", "");
-    @cDefine("GL_GLEXT_PROTOTYPES", "");
-    @cInclude("GLFW/glfw3.h");
-});
+const builtin = @import("builtin");
+
+const c = if (builtin.os.tag == .macos)
+    @cImport({
+        @cDefine("GLFW_INCLUDE_NONE", "");
+        @cInclude("GLFW/glfw3.h");
+        @cInclude("OpenGL/gl3.h");
+    })
+else
+    @cImport({
+        @cDefine("GLFW_INCLUDE_NONE", "");
+        @cDefine("GL_GLEXT_PROTOTYPES", "");
+        @cInclude("GLFW/glfw3.h");
+        @cInclude("GL/gl.h");
+        @cInclude("GL/glext.h");
+    });
 
 const state = @import("./ecs/state.zig");
 const Shader = @import("./rendering/ShaderLib.zig");
@@ -53,11 +64,11 @@ pub fn main() !void {
     const geometry = Square.SquareGeometry.init();
 
     const square_positions = [_][2]f32{
-        .{ 100, 200 },
-        // .{ 0, 0 },
-        // .{ 750, 550 },
-        // .{ 250, 250 },
-        // .{ 400, 300 },
+        .{ 300, 300 },
+        .{ 0, 0 },
+        .{ 750, 550 },
+        .{ 250, 250 },
+        .{ 400, 300 },
     };
 
     var global_state: state.GlobalState = .{
@@ -85,7 +96,7 @@ pub fn main() !void {
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
 
-        try render_pipeline.render(geometry, &square_positions, total_elapsed_ns);
+        try render_pipeline.render(geometry, &square_positions);
 
         if (total_elapsed_ns / std.time.ns_per_s > last_second) {
             std.debug.print("{d} fps\n", .{num_frames});
