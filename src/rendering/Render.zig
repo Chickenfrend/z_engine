@@ -40,16 +40,18 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
 pub const RenderPipeline = struct {
     shader: Shader,
     projection: [4][4]f32,
+    allocator: std.mem.Allocator,
+    matrices: std.ArrayList([16]f32),
 
     // The square geometry should be changed when we implement sprites. Probably.
-    pub fn render(self: RenderPipeline, geometry: Square.SquareGeometry, positions: []const [2]f32) !void {
+    pub fn render(self: *RenderPipeline, geometry: Square.SquareGeometry, positions: []const [2]f32) !void {
         // Render
+        // This clears the screen
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
 
-        // Draw the square
-        self.shader.use();
-        self.shader.setMat4f("projection", flattenMat4(self.projection));
+        // Reuse memory
+        self.matrices.clearRetainingCapacity();
 
         for (positions) |position| {
             const square_trans = zm.Mat4f.translation(position[0], position[1], 0.0);
@@ -58,11 +60,19 @@ pub const RenderPipeline = struct {
             // You could add rotation and stuff onto this.
             const modelM = square_trans.multiply(scale);
 
-            self.shader.setMat4f("model", flattenMat4(modelM.data));
-
-            // Draw square using indices
-            geometry.draw();
+            // Add to the list of things to be drawn.
+            try self.matrices.append(flattenMat4(modelM.data));
         }
+
+        // Send the instance data
+        geometry.updateInstanceData(self.matrices.items);
+
+        // Draw the square
+        self.shader.use();
+        self.shader.setMat4f("projection", flattenMat4(self.projection));
+
+        // Draw em all. We're sending the instance count here.
+        geometry.drawInstanced(@intCast(positions.len));
     }
 
     pub fn init(allocator: std.mem.Allocator) RenderPipeline {
@@ -122,13 +132,14 @@ pub const RenderPipeline = struct {
         return RenderPipeline{
             .shader = shaderProgram,
             .projection = projM.data,
+            .allocator = allocator,
+            .matrices = std.ArrayList([16]f32).init(allocator),
         };
     }
 
-    pub fn cleanup(self: RenderPipeline) !void {
-        defer c.glDeleteVertexArrays(1, &self.vao);
-        defer c.glDeleteBuffers(1, &self.vbo);
-        defer c.glDeleteBuffers(1, &self.ebo);
+    pub fn cleanup(self: *RenderPipeline) !void {
+        self.matrices.deinit();
+        c.glDeleteProgram(self.shader.ID);
     }
 };
 
