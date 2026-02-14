@@ -61,7 +61,7 @@ pub const RenderPipeline = struct {
             const modelM = square_trans.multiply(scale);
 
             // Add to the list of things to be drawn.
-            try self.matrices.append(flattenMat4(modelM.data));
+            try self.matrices.append(self.allocator, flattenMat4(modelM.data));
         }
 
         // Send the instance data
@@ -133,12 +133,12 @@ pub const RenderPipeline = struct {
             .shader = shaderProgram,
             .projection = projM.data,
             .allocator = allocator,
-            .matrices = std.ArrayList([16]f32).init(allocator),
+            .matrices = .empty,
         };
     }
 
-    pub fn cleanup(self: *RenderPipeline) !void {
-        self.matrices.deinit();
+    pub fn cleanup(self: *RenderPipeline) void {
+        self.matrices.deinit(self.allocator);
         c.glDeleteProgram(self.shader.ID);
     }
 };

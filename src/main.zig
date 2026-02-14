@@ -55,13 +55,17 @@ pub fn main() !void {
     // Setup allocators
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
+
     var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
     // This is the creation of the shader program.
     var render_pipeline = Renderer.RenderPipeline.init(arena_allocator);
+    defer render_pipeline.cleanup();
 
-    const geometry = Square.SquareGeometry.init();
+    var geometry = Square.SquareGeometry.init();
+    defer geometry.deinit();
 
     const square_positions = [_][2]f32{
         .{ 300, 300 },
