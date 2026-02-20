@@ -53,26 +53,19 @@ pub const RenderPipeline = struct {
         // Reuse memory
         self.matrices.clearRetainingCapacity();
 
-        for (positions, 0..) |position, idx| {
+        for (positions) |position| {
             const square_trans = zm.Mat4f.translation(position[0], position[1], 0.0);
             const scale = zm.Mat4f.scaling(300.0, 300.0, 1.0);
 
             // You could add rotation and stuff onto this.
-            const modelM = square_trans.multiply(scale);
-
-            const flat = flattenMat4(modelM.data);
-
-                // Debug: Print what we're sending
-            std.debug.print("Raw matrix: {any}\n", .{modelM.data});
-            std.debug.print("Square {}: input pos=({d}, {d})\n", .{idx, position[0], position[1]});
-            std.debug.print("  Matrix[12-15]: [{d}, {d}, {d}, {d}]\n", .{flat[12], flat[13], flat[14], flat[15]});
-
+            // This has to be transposed here because it isn't tranposed by the setMat4f
+            // function like the projection matrix is.
+            const modelM = square_trans.multiply(scale).transpose();
 
             // Add to the list of things to be drawn.
             try self.matrices.append(self.allocator, flattenMat4(modelM.data));
         }
 
-        std.debug.print("Uploading {} matrices\n", .{self.matrices.items.len});
         // Send the instance data
         geometry.updateInstanceData(self.matrices.items);
 
