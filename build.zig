@@ -82,6 +82,8 @@ pub fn build(b: *std.Build) void {
         exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/vulkan-loader/lib" });
         exe.linkFramework("OpenGL");
     } else {
+        exe_mod.addIncludePath(.{ .cwd_relative = "/usr/include" });
+        exe.addLibraryPath(.{ .cwd_relative = "/usr/lib64" });
         exe.linkSystemLibrary("GL");
     }
     exe.linkSystemLibrary("glfw");
