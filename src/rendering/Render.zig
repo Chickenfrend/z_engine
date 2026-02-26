@@ -44,6 +44,11 @@ pub const RenderPipeline = struct {
     matrices: std.ArrayList([16]f32),
 
     // The square geometry should be changed when we implement sprites. Probably.
+    // I think this should take a flag, called "instanced" or something, which would let it toggle
+    // between rendering instanced and uniform/non-instanced.
+    // I'm not sure exactly how that should be worked out or how instanced vs non instanced stuff
+    // should be organized. Right now (02/26/2026) the VBO/VAO is associated with the geometry,
+    // not the render pipeline.
     pub fn render(self: *RenderPipeline, geometry: Square.SquareGeometry, positions: []const [2]f32) !void {
         // Render
         // This clears the screen
@@ -60,6 +65,7 @@ pub const RenderPipeline = struct {
             // You could add rotation and stuff onto this.
             // This has to be transposed here because it isn't tranposed by the setMat4f
             // function like the projection matrix is.
+            // I'm not sure how efficient this is.
             const modelM = square_trans.multiply(scale).transpose();
 
             // Add to the list of things to be drawn.
