@@ -2,6 +2,7 @@
 
 const Shader = @import("ShaderLib.zig");
 const Square = @import("./Square.zig");
+const Texture = @import ("./Texture.zig").Texture;
 
 const std = @import("std");
 const zm = @import("zm");
@@ -39,6 +40,7 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
 
 pub const RenderPipeline = struct {
     shader: Shader,
+    texture: Texture,
     projection: [4][4]f32,
     allocator: std.mem.Allocator,
     matrices: std.ArrayList([16]f32),
@@ -90,50 +92,7 @@ pub const RenderPipeline = struct {
             "src/rendering/shaders/triangle_shader.frag",
         );
 
-        // TODO refactor texture loading
-        var read_buffer: [zigimg.io.DEFAULT_BUFFER_SIZE]u8 = undefined;
-        var image = zigimg.Image.fromFilePath(allocator, "src/font.png", read_buffer[0..]) catch |err| {
-            std.debug.print("Failed to load image: {}\n", .{err});
-            std.process.exit(1);
-        };
-        defer image.deinit(allocator);
-
-        // Create OpenGL texture
-        var texture: c.GLuint = undefined;
-        c.glGenTextures(1, &texture);
-        c.glBindTexture(c.GL_TEXTURE_2D, texture);
-
-        // Set texture parameters
-        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_REPEAT);
-        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_REPEAT);
-        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
-        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
-
-        // Upload image data to GPU
-        c.glPixelStorei(c.GL_UNPACK_ALIGNMENT, 1);
-
-        const gl_format: c.GLint, const img_ptr: ?*const anyopaque = switch (image.pixels) {
-            .grayscale8 => |data| .{ c.GL_RED, @ptrCast(data.ptr) },
-            .rgb24 => |data| .{ c.GL_RGB, @ptrCast(data.ptr) },
-            .rgba32 => |data| .{ c.GL_RGBA, @ptrCast(data.ptr) },
-            else => {
-                std.debug.print("Unsupported pixel format: {}\n", .{image.pixels});
-                std.process.exit(1);
-            },
-        };
-
-        c.glTexImage2D(
-            c.GL_TEXTURE_2D,
-            0,
-            gl_format,
-            @intCast(image.width),
-            @intCast(image.height),
-            0,
-            @intCast(gl_format),
-            c.GL_UNSIGNED_BYTE,
-            img_ptr,
-        );
-        std.debug.print("Loaded texture: {}x{}\n", .{ image.width, image.height });
+        const texture = Texture.initFromFile(allocator, "src/font.png");
 
         const projM = zm.Mat4f.orthographicRH(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
 
@@ -142,6 +101,7 @@ pub const RenderPipeline = struct {
             .projection = projM.data,
             .allocator = allocator,
             .matrices = .empty,
+            .texture = texture,
         };
     }
 
