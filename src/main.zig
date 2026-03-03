@@ -96,10 +96,6 @@ pub fn main() !void {
         // Process Input
         processInput(window);
 
-        // Render
-        c.glClearColor(0.2, 0.3, 0.3, 1.0);
-        c.glClear(c.GL_COLOR_BUFFER_BIT);
-
         try render_pipeline.render(geometry, &square_positions);
 
         if (total_elapsed_ns / std.time.ns_per_s > last_second) {
