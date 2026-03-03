@@ -6,7 +6,6 @@ const Texture = @import ("./Texture.zig").Texture;
 
 const std = @import("std");
 const zm = @import("zm");
-const zigimg = @import("zigimg");
 
 const builtin = @import("builtin");
 
