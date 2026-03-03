@@ -107,6 +107,7 @@ pub const RenderPipeline = struct {
 
     pub fn cleanup(self: *RenderPipeline) void {
         self.matrices.deinit(self.allocator);
+        self.texture.deinit();
         c.glDeleteProgram(self.shader.ID);
     }
 };
