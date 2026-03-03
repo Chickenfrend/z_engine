@@ -115,5 +115,5 @@ pub const SquareGeometry = struct {
 pub const Square = struct {
     position: [2]f32,
     width: f32,
-    length: f32,
+    height: f32,
 };

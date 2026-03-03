@@ -24,8 +24,10 @@ else
 
 const state = @import("./ecs/state.zig");
 const Shader = @import("./rendering/ShaderLib.zig");
-const Square = @import("./rendering/Square.zig");
+const Square = @import("./rendering/Square.zig").Square;
+const SquareGeometry = @import("./rendering/Square.zig").SquareGeometry;
 const Renderer = @import("./rendering/Render.zig");
+const PongState = @import("./PongState.zig").PongState;
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
@@ -64,15 +66,14 @@ pub fn main() !void {
     var render_pipeline = Renderer.RenderPipeline.init(arena_allocator);
     defer render_pipeline.cleanup();
 
-    var geometry = Square.SquareGeometry.init();
+    var geometry = SquareGeometry.init();
     defer geometry.deinit();
+    
+    const pong = PongState.init();
 
-    const square_positions = [_][2]f32{
-        .{ 300, 300 },
-        .{ 0, 0 },
-        .{ 750, 550 },
-        .{ 250, 250 },
-        .{ 400, 300 },
+    const squares = [_]Square{
+        .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100 },
+        .{ .position = .{ 720, pong.paddle_right_y }, .width = 20, .height = 100 },
     };
 
     var global_state: state.GlobalState = .{
@@ -96,7 +97,7 @@ pub fn main() !void {
         // Process Input
         processInput(window);
 
-        try render_pipeline.render(geometry, &square_positions);
+        try render_pipeline.render(geometry, &squares);
 
         if (total_elapsed_ns / std.time.ns_per_s > last_second) {
             std.debug.print("{d} fps\n", .{num_frames});
