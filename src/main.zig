@@ -99,7 +99,7 @@ pub fn main() !void {
 
         const squares = [_]Square{
             .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100 },
-            .{ .position = .{ 720, pong.paddle_right_y }, .width = 20, .height = 100 },
+            .{ .position = .{ 780, pong.paddle_right_y }, .width = 20, .height = 100 },
         };
 
         try render_pipeline.render(geometry, &squares);
@@ -134,6 +134,14 @@ fn processInput(window: ?*c.GLFWwindow, pong: *PongState, dt: f32) void {
     if (c.glfwGetKey(window, c.GLFW_KEY_S) == c.GLFW_PRESS) {
         pong.moveLeftPaddle(1.0, dt);
     }
+    if (c.glfwGetKey(window, c.GLFW_KEY_UP) == c.GLFW_PRESS) {
+        pong.moveRightPaddle(-1.0, dt);
+    }
+    if (c.glfwGetKey(window, c.GLFW_KEY_DOWN) == c.GLFW_PRESS) {
+        pong.moveRightPaddle(1.0, dt);
+    }
+
+
 }
 
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
