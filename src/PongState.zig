@@ -20,7 +20,7 @@ pub const PongState = struct {
     // The number here is the paddle height. This kinda sucks that it's hard coded.
     pub fn moveLeftPaddle(self: *PongState, direction: f32, dt: f32) void {
         self.paddle_left_y += direction*self.paddle_speed*dt;
-        self.paddle_left_y = std.math.clamp(self.paddle_left_y, 0, self.game_height - 100);
+        self.paddle_left_y = std.math.clamp(self.paddle_left_y, 50, self.game_height - 250);
         std.debug.print("Moving paddle, new position is {d}", .{self.paddle_left_y});
     }
 };
