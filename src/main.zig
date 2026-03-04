@@ -69,12 +69,8 @@ pub fn main() !void {
     var geometry = SquareGeometry.init();
     defer geometry.deinit();
     
-    const pong = PongState.init();
+    var pong = PongState.init(Renderer.WindowSize.height, Renderer.WindowSize.width);
 
-    const squares = [_]Square{
-        .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100 },
-        .{ .position = .{ 720, pong.paddle_right_y }, .width = 20, .height = 100 },
-    };
 
     var global_state: state.GlobalState = .{
         .clock = std.time.Timer.start() catch |err| {
@@ -91,11 +87,20 @@ pub fn main() !void {
     global_state.clock.reset();
     var num_frames: u64 = 0;
     var last_second: u64 = 0;
+    var last_elapsed_ns: u64 = 0;
     while (c.glfwWindowShouldClose(window) == 0) {
         const total_elapsed_ns = global_state.clock.read();
+        const delta_ns = total_elapsed_ns - last_elapsed_ns;
+        last_elapsed_ns = total_elapsed_ns;
 
         // Process Input
-        processInput(window);
+        const dt: f32 = @floatCast(@as(f64, @floatFromInt(delta_ns)) / std.time.ns_per_s);
+        processInput(window, &pong, dt);
+
+        const squares = [_]Square{
+            .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100 },
+            .{ .position = .{ 720, pong.paddle_right_y }, .width = 20, .height = 100 },
+        };
 
         try render_pipeline.render(geometry, &squares);
 
@@ -119,9 +124,15 @@ fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_in
     c.glViewport(0, 0, width, height);
 }
 
-fn processInput(window: ?*c.GLFWwindow) void {
+fn processInput(window: ?*c.GLFWwindow, pong: *PongState, dt: f32) void {
     if (c.glfwGetKey(window, c.GLFW_KEY_ESCAPE) == c.GLFW_PRESS) {
         c.glfwSetWindowShouldClose(window, 1);
+    }
+    if (c.glfwGetKey(window, c.GLFW_KEY_W) == c.GLFW_PRESS) {
+        pong.moveLeftPaddle(-1.0, dt);
+    }
+    if (c.glfwGetKey(window, c.GLFW_KEY_S) == c.GLFW_PRESS) {
+        pong.moveLeftPaddle(1.0, dt);
     }
 }
 
