@@ -101,7 +101,7 @@ pub fn main() !void {
         const squares = [_]Square{
             .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100 },
             .{ .position = .{ 780, pong.paddle_right_y }, .width = 20, .height = 100 },
-            .{ .position = pong.ball_pos, .width = 20, .height = 20 },
+            .{ .position = pong.ball_pos, .width = 15, .height = 15 },
         };
 
         try render_pipeline.render(geometry, &squares);

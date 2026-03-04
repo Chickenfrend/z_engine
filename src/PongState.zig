@@ -44,5 +44,32 @@ pub const PongState = struct {
         if (self.ball_pos[0] <= 0 or self.ball_pos[0] >= self.game_width) {
             self.ball_vel[0] = -self.ball_vel[0];
         }
+
+        checkPaddleCollision(self);
+    }
+
+    fn checkPaddleCollision(self: *PongState) void {
+        const ball_size: f32 = 20;
+        const paddle_width: f32 = 20;
+        const paddle_height: f32 = 100;
+
+        // Left paddle
+        if (self.ball_pos[0] <= 20 + paddle_width and
+            self.ball_vel[0] < 0 and
+            self.ball_pos[1] + ball_size >= self.paddle_left_y and
+            self.ball_pos[1] <= self.paddle_left_y + paddle_height)
+        {
+            self.ball_vel[0] = @abs(self.ball_vel[0]);
+            self.ball_pos[0] = 20 + paddle_width; // clamp out of paddle
+        }
+
+        // Right paddle
+        if (self.ball_pos[0] + ball_size >= self.game_width - 20 and
+            self.ball_pos[1] + ball_size >= self.paddle_right_y and
+            self.ball_pos[1] <= self.paddle_right_y + paddle_height)
+        {
+            self.ball_vel[0] = -@abs(self.ball_vel[0]);
+            self.ball_pos[0] = self.game_width - 20 - ball_size; // clamp out of paddle
+        }
     }
 };
