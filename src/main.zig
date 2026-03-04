@@ -96,6 +96,7 @@ pub fn main() !void {
         // Process Input
         const dt: f32 = @floatCast(@as(f64, @floatFromInt(delta_ns)) / std.time.ns_per_s);
         processInput(window, &pong, dt);
+        pong.update(dt);
 
         const squares = [_]Square{
             .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100 },

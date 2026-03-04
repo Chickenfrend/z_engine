@@ -25,11 +25,24 @@ pub const PongState = struct {
     // It is just a proof of concept though.
     pub fn moveLeftPaddle(self: *PongState, direction: f32, dt: f32) void {
         self.paddle_left_y += direction*self.paddle_speed*dt;
-        self.paddle_left_y = std.math.clamp(self.paddle_left_y, 50, self.game_height - 250);
+        self.paddle_left_y = std.math.clamp(self.paddle_left_y, 50, self.game_height - 50);
     }
 
     pub fn moveRightPaddle(self: *PongState, direction: f32, dt: f32) void {
         self.paddle_right_y += direction*self.paddle_speed*dt;
-        self.paddle_right_y = std.math.clamp(self.paddle_right_y, 50, self.game_height - 250);
+        self.paddle_right_y = std.math.clamp(self.paddle_right_y, 50, self.game_height - 50);
+    }
+
+    pub fn update(self: *PongState, dt: f32) void {
+        self.ball_pos[0] += self.ball_vel[0] * dt;
+        self.ball_pos[1] += self.ball_vel[1] * dt;
+
+        if (self.ball_pos[1] <= 0 or self.ball_pos[1] >= self.game_height) {
+            self.ball_vel[1] = -self.ball_vel[1];
+        }
+
+        if (self.ball_pos[0] <= 0 or self.ball_pos[0] >= self.game_width) {
+            self.ball_vel[0] = -self.ball_vel[0];
+        }
     }
 };
