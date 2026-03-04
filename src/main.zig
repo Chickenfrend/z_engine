@@ -69,7 +69,7 @@ pub fn main() !void {
     var geometry = SquareGeometry.init();
     defer geometry.deinit();
     
-    var pong = PongState.init(Renderer.WindowSize.height, Renderer.WindowSize.width);
+    var pong = PongState.init(Renderer.WindowSize.width, Renderer.WindowSize.height);
 
 
     var global_state: state.GlobalState = .{
@@ -100,6 +100,7 @@ pub fn main() !void {
         const squares = [_]Square{
             .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100 },
             .{ .position = .{ 780, pong.paddle_right_y }, .width = 20, .height = 100 },
+            .{ .position = pong.ball_pos, .width = 20, .height = 20 },
         };
 
         try render_pipeline.render(geometry, &squares);

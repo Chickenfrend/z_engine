@@ -6,6 +6,8 @@ pub const PongState = struct {
     paddle_speed: f32,
     game_height: f32,
     game_width: f32,
+    ball_pos: [2]f32,
+    ball_vel: [2]f32,
 
     pub fn init(window_width: f32, window_height: f32) PongState {
         return .{
@@ -14,6 +16,8 @@ pub const PongState = struct {
             .paddle_speed = 200,
             .game_height = window_height,
             .game_width = window_width,
+            .ball_pos = .{window_width/2, window_height/2},
+            .ball_vel = .{200, 200},
         };
     }
 
