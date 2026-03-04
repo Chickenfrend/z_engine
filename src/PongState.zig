@@ -49,7 +49,7 @@ pub const PongState = struct {
     }
 
     fn checkPaddleCollision(self: *PongState) void {
-        const ball_size: f32 = 20;
+        const ball_size: f32 = 15;
         const paddle_width: f32 = 20;
         const paddle_height: f32 = 100;
 
