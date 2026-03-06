@@ -79,8 +79,22 @@ pub const RenderPipeline = struct {
 
         // Draw the square
         self.shader.use();
+        c.glActiveTexture(c.GL_TEXTURE0);
+        c.glBindTexture(c.GL_TEXTURE_2D, self.texture.id);
+        self.shader.setInt("textureSampler", 0);
         self.shader.setMat4f("projection", flattenMat4(self.projection));
 
+        var bound_texture: c.GLint = 0;
+        c.glGetIntegerv(c.GL_TEXTURE_BINDING_2D, &bound_texture);
+        var bound_program: c.GLint = 0;
+        c.glGetIntegerv(c.GL_CURRENT_PROGRAM, &bound_program);
+        var blend_enabled: c.GLboolean = 0;
+        c.glGetBooleanv(c.GL_BLEND, &blend_enabled);
+        std.debug.print("texture: {d} (expected {d}), program: {d} (expected {d}), blend: {d}\n", .{
+            bound_texture, self.texture.id,
+            bound_program, self.shader.ID,
+            blend_enabled,
+        });
         // Draw em all. We're sending the instance count here.
         geometry.drawInstanced(@intCast(squares.len));
     }

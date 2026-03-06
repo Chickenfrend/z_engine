@@ -33,6 +33,7 @@ pub const Texture = struct {
         // Create OpenGL texture
         var textureId: c.GLuint = undefined;
         c.glGenTextures(1, &textureId);
+        c.glActiveTexture(c.GL_TEXTURE0);
         c.glBindTexture(c.GL_TEXTURE_2D, textureId);
 
         // Set texture parameters

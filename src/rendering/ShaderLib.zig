@@ -122,7 +122,7 @@ pub fn setBool(self: Shader, name: [*c]const u8, value: bool) void {
     c.glUniform1i(c.glGetUniformLocation(self.ID, name), if (value) 1 else 0);
 }
 
-pub fn setInt(self: Shader, name: [*c]const u8, value: u32) void {
+pub fn setInt(self: Shader, name: [*c]const u8, value: i32) void {
     c.glUniform1i(c.glGetUniformLocation(self.ID, name), @as(c_int, value));
 }
 
