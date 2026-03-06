@@ -1,7 +1,8 @@
 // File containing main renderer loop
 
 const Shader = @import("ShaderLib.zig");
-const Square = @import("./Square.zig");
+const SquareGeometry = @import("./Square.zig").SquareGeometry;
+const Square = @import("./Square.zig").Square;
 const Texture = @import ("./Texture.zig").Texture;
 
 const std = @import("std");
@@ -50,7 +51,7 @@ pub const RenderPipeline = struct {
     // I'm not sure exactly how that should be worked out or how instanced vs non instanced stuff
     // should be organized. Right now (02/26/2026) the VBO/VAO is associated with the geometry,
     // not the render pipeline.
-    pub fn render(self: *RenderPipeline, geometry: Square.SquareGeometry, positions: []const [2]f32) !void {
+    pub fn render(self: *RenderPipeline, geometry: SquareGeometry, squares: []const Square) !void {
         // Render
         // This clears the screen
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -59,9 +60,9 @@ pub const RenderPipeline = struct {
         // Reuse memory
         self.matrices.clearRetainingCapacity();
 
-        for (positions) |position| {
-            const square_trans = zm.Mat4f.translation(position[0], position[1], 0.0);
-            const scale = zm.Mat4f.scaling(300.0, 300.0, 1.0);
+        for (squares) |square| {
+            const square_trans = zm.Mat4f.translation(square.position[0], square.position[1], 0.0);
+            const scale = zm.Mat4f.scaling(square.width, square.height, 1.0);
 
             // You could add rotation and stuff onto this.
             // This has to be transposed here because it isn't tranposed by the setMat4f
@@ -81,7 +82,7 @@ pub const RenderPipeline = struct {
         self.shader.setMat4f("projection", flattenMat4(self.projection));
 
         // Draw em all. We're sending the instance count here.
-        geometry.drawInstanced(@intCast(positions.len));
+        geometry.drawInstanced(@intCast(squares.len));
     }
 
     pub fn init(allocator: std.mem.Allocator) RenderPipeline {
