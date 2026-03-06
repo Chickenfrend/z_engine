@@ -10,6 +10,8 @@ pub const PongState = struct {
     ball_vel: [2]f32,
     left_score: f32,
     right_score: f32,
+    ball_size: f32,
+    paddle_height: f32,
 
     pub fn init(window_width: f32, window_height: f32) PongState {
         return .{
@@ -22,6 +24,8 @@ pub const PongState = struct {
             .ball_vel = .{200, 200},
             .left_score = 0,
             .right_score = 0,
+            .ball_size = 15,
+            .paddle_height = 100,
         };
     }
 
@@ -54,27 +58,25 @@ pub const PongState = struct {
     }
 
     fn checkPaddleCollision(self: *PongState) void {
-        const ball_size: f32 = 15;
         const paddle_width: f32 = 20;
-        const paddle_height: f32 = 100;
 
         // Left paddle
         if (self.ball_pos[0] <= 20 + paddle_width and
             self.ball_vel[0] < 0 and
-            self.ball_pos[1] + ball_size >= self.paddle_left_y and
-            self.ball_pos[1] <= self.paddle_left_y + paddle_height)
+            self.ball_pos[1] + self.ball_size >= self.paddle_left_y and
+            self.ball_pos[1] <= self.paddle_left_y + self.paddle_height)
         {
             self.ball_vel[0] = @abs(self.ball_vel[0]);
             self.ball_pos[0] = 20 + paddle_width; // clamp out of paddle
         }
 
         // Right paddle
-        if (self.ball_pos[0] + ball_size >= self.game_width - 20 and
-            self.ball_pos[1] + ball_size >= self.paddle_right_y and
-            self.ball_pos[1] <= self.paddle_right_y + paddle_height)
+        if (self.ball_pos[0] + self.ball_size >= self.game_width - 20 and
+            self.ball_pos[1] + self.ball_size >= self.paddle_right_y and
+            self.ball_pos[1] <= self.paddle_right_y + self.paddle_height)
         {
             self.ball_vel[0] = -@abs(self.ball_vel[0]);
-            self.ball_pos[0] = self.game_width - 20 - ball_size; // clamp out of paddle
+            self.ball_pos[0] = self.game_width - 20 - self.ball_size; // clamp out of paddle
         }
     }
 
