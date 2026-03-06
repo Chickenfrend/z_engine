@@ -92,9 +92,8 @@ pub fn main() !void {
 
     var geometry = SquareGeometry.init();
     defer geometry.deinit();
-    
-    var pong = PongState.init(Renderer.WindowSize.width, Renderer.WindowSize.height);
 
+    var pong = PongState.init(Renderer.WindowSize.width, Renderer.WindowSize.height);
 
     var global_state: state.GlobalState = .{
         .clock = std.time.Timer.start() catch |err| {
@@ -166,15 +165,21 @@ pub fn main() !void {
 
         // Render text if font is loaded
         if (font_renderer) |*fr| {
-            // Title text
-            fr.renderText("Z Engine - Game Engine", 10.0, 10.0, 0.8, .{ 1.0, 1.0, 1.0 });
-
             // FPS counter
             const fps_text = try std.fmt.allocPrint(arena_allocator, "FPS: {d}", .{fps_display});
             fr.renderText(fps_text, 10.0, 60.0, 0.6, .{ 0.0, 1.0, 0.0 });
 
             // Controls hint
             fr.renderText("Press ESC to exit", 10.0, @as(f32, @floatFromInt(Renderer.WindowSize.height)) - 60.0, 0.5, .{ 0.7, 0.7, 0.7 });
+
+            //Pong Score
+            fr.renderText(
+                try std.fmt.allocPrint(arena_allocator, "{d} - {d}", .{ pong.left_score, pong.right_score }),
+                @as(f32, Renderer.WindowSize.width) / 2 - 50,
+                50.0,
+                1.0,
+                .{ 1.0, 1.0, 1.0 },
+            );
         }
 
         // Update FPS counter once per second
@@ -215,8 +220,6 @@ fn processInput(window: ?*c.GLFWwindow, pong: *PongState, dt: f32) void {
     if (c.glfwGetKey(window, c.GLFW_KEY_DOWN) == c.GLFW_PRESS) {
         pong.moveRightPaddle(1.0, dt);
     }
-
-
 }
 
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
