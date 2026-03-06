@@ -15,8 +15,12 @@ pub const PongState = struct {
     right_score: f32,
     ball_size: f32,
     paddle_height: f32,
+    rng: std.Random.DefaultPrng,
 
     pub fn init(window_width: f32, window_height: f32) PongState {
+        const seed: u64 = @bitCast(std.time.milliTimestamp());
+        var prng = std.Random.DefaultPrng.init(seed);
+        const vel = getDirectionFromRng(prng.random());
         return .{
             .paddle_left_y = 250,
             .paddle_right_y = 250,
@@ -24,12 +28,26 @@ pub const PongState = struct {
             .game_height = window_height,
             .game_width = window_width,
             .ball_pos = .{ window_width / 2, window_height / 2 },
-            .ball_vel = .{ BALL_START_VEL, BALL_START_VEL },
+            .ball_vel = vel,
             .left_score = 0,
             .right_score = 0,
             .ball_size = 15,
             .paddle_height = 100,
+            .rng = prng,
         };
+    }
+
+    fn getDirectionFromRng(rng: std.Random) [2]f32 {
+        const magnitude: f32 = @as(f32, BALL_START_VEL) * std.math.sqrt(@as(f32, 2.0));
+        const angle = rng.float(f32) * 2.0 * std.math.pi;
+        return .{
+            magnitude * std.math.cos(angle),
+            magnitude * std.math.sin(angle),
+        };
+    }
+
+    fn getDirection(self: *PongState) [2]f32 {
+        return getDirectionFromRng(self.rng.random());
     }
 
     // The number here is the paddle height. This kinda sucks that it's hard coded.
@@ -87,12 +105,12 @@ pub const PongState = struct {
         if (self.ball_pos[0] < 0) {
             self.ball_pos = .{ self.game_width / 2, self.game_height / 2 };
             self.left_score += 1;
-            self.ball_vel = .{ BALL_START_VEL, BALL_START_VEL };
+            self.ball_vel = self.getDirection();
         }
         if (self.ball_pos[0] > self.game_width) {
             self.ball_pos = .{ self.game_width / 2, self.game_height / 2 };
             self.right_score += 1;
-            self.ball_vel = .{ BALL_START_VEL, BALL_START_VEL };
+            self.ball_vel = self.getDirection();
         }
     }
 };
