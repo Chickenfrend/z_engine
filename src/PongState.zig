@@ -63,8 +63,8 @@ pub const PongState = struct {
         // Left paddle
         if (self.ball_pos[0] <= 20 + paddle_width and
             self.ball_vel[0] < 0 and
-            self.ball_pos[1] + self.ball_size >= self.paddle_left_y and
-            self.ball_pos[1] <= self.paddle_left_y + self.paddle_height)
+            self.ball_pos[1] + self.ball_size >= self.paddle_left_y - self.paddle_height/2 and
+            self.ball_pos[1] <= self.paddle_left_y + self.paddle_height/2)
         {
             self.ball_vel[0] = @abs(self.ball_vel[0]);
             self.ball_pos[0] = 20 + paddle_width; // clamp out of paddle
@@ -72,8 +72,8 @@ pub const PongState = struct {
 
         // Right paddle
         if (self.ball_pos[0] + self.ball_size >= self.game_width - 20 and
-            self.ball_pos[1] + self.ball_size >= self.paddle_right_y and
-            self.ball_pos[1] <= self.paddle_right_y + self.paddle_height)
+            self.ball_pos[1] + self.ball_size >= self.paddle_right_y - self.paddle_height/2 and
+            self.ball_pos[1] <= self.paddle_right_y + self.paddle_height/2)
         {
             self.ball_vel[0] = -@abs(self.ball_vel[0]);
             self.ball_pos[0] = self.game_width - 20 - self.ball_size; // clamp out of paddle
