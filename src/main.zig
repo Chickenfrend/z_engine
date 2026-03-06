@@ -24,9 +24,11 @@ else
 
 const state = @import("./ecs/state.zig");
 const Shader = @import("./rendering/ShaderLib.zig");
-const Square = @import("./rendering/Square.zig");
+const Square = @import("./rendering/Square.zig").Square;
+const SquareGeometry = @import("./rendering/Square.zig").SquareGeometry;
 const Renderer = @import("./rendering/Render.zig");
 const FontRenderer = @import("./rendering/FontRenderer.zig");
+const PongState = @import("./PongState.zig").PongState;
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
@@ -86,16 +88,13 @@ pub fn main() !void {
 
     // This is the creation of the shader program.
     var render_pipeline = Renderer.RenderPipeline.init(arena_allocator);
+    defer render_pipeline.cleanup();
 
-    const geometry = Square.SquareGeometry.init();
+    var geometry = SquareGeometry.init();
+    defer geometry.deinit();
+    
+    var pong = PongState.init(Renderer.WindowSize.width, Renderer.WindowSize.height);
 
-    const square_positions = [_][2]f32{
-        .{ 300, 300 },
-        .{ 0, 0 },
-        .{ 750, 550 },
-        .{ 250, 250 },
-        .{ 400, 300 },
-    };
 
     var global_state: state.GlobalState = .{
         .clock = std.time.Timer.start() catch |err| {
@@ -146,18 +145,24 @@ pub fn main() !void {
     var last_second: u64 = 0;
     var fps_display: u64 = 0;
 
+    var last_elapsed_ns: u64 = 0;
     while (c.glfwWindowShouldClose(window) == 0) {
         const total_elapsed_ns = global_state.clock.read();
+        const delta_ns = total_elapsed_ns - last_elapsed_ns;
+        last_elapsed_ns = total_elapsed_ns;
 
         // Process Input
-        processInput(window);
+        const dt: f32 = @floatCast(@as(f64, @floatFromInt(delta_ns)) / std.time.ns_per_s);
+        processInput(window, &pong, dt);
+        pong.update(dt);
 
-        // Render
-        c.glClearColor(0.2, 0.3, 0.3, 1.0);
-        c.glClear(c.GL_COLOR_BUFFER_BIT);
+        const squares = [_]Square{
+            .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100 },
+            .{ .position = .{ 780, pong.paddle_right_y }, .width = 20, .height = 100 },
+            .{ .position = pong.ball_pos, .width = 15, .height = 15 },
+        };
 
-        // Render squares
-        try render_pipeline.render(geometry, &square_positions);
+        try render_pipeline.render(geometry, &squares);
 
         // Render text if font is loaded
         if (font_renderer) |*fr| {
@@ -194,10 +199,24 @@ fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_in
     c.glViewport(0, 0, width, height);
 }
 
-fn processInput(window: ?*c.GLFWwindow) void {
+fn processInput(window: ?*c.GLFWwindow, pong: *PongState, dt: f32) void {
     if (c.glfwGetKey(window, c.GLFW_KEY_ESCAPE) == c.GLFW_PRESS) {
         c.glfwSetWindowShouldClose(window, 1);
     }
+    if (c.glfwGetKey(window, c.GLFW_KEY_W) == c.GLFW_PRESS) {
+        pong.moveLeftPaddle(-1.0, dt);
+    }
+    if (c.glfwGetKey(window, c.GLFW_KEY_S) == c.GLFW_PRESS) {
+        pong.moveLeftPaddle(1.0, dt);
+    }
+    if (c.glfwGetKey(window, c.GLFW_KEY_UP) == c.GLFW_PRESS) {
+        pong.moveRightPaddle(-1.0, dt);
+    }
+    if (c.glfwGetKey(window, c.GLFW_KEY_DOWN) == c.GLFW_PRESS) {
+        pong.moveRightPaddle(1.0, dt);
+    }
+
+
 }
 
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.

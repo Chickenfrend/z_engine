@@ -84,6 +84,8 @@ pub fn build(b: *std.Build) void {
         exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/freetype/lib" });
         exe.linkFramework("OpenGL");
     } else {
+        exe_mod.addIncludePath(.{ .cwd_relative = "/usr/include" });
+        exe.addLibraryPath(.{ .cwd_relative = "/usr/lib64" });
         exe.linkSystemLibrary("GL");
         // Add FreeType include path for Linux
         exe.addIncludePath(.{ .cwd_relative = "/usr/include/freetype2" });

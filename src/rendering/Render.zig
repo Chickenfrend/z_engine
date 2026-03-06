@@ -1,11 +1,12 @@
 // File containing main renderer loop
 
 const Shader = @import("ShaderLib.zig");
-const Square = @import("./Square.zig");
+const SquareGeometry = @import("./Square.zig").SquareGeometry;
+const Square = @import("./Square.zig").Square;
+const Texture = @import ("./Texture.zig").Texture;
 
 const std = @import("std");
 const zm = @import("zm");
-const zigimg = @import("zigimg");
 
 const builtin = @import("builtin");
 
@@ -39,30 +40,49 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
 
 pub const RenderPipeline = struct {
     shader: Shader,
+    texture: Texture,
     projection: [4][4]f32,
+    allocator: std.mem.Allocator,
+    matrices: std.ArrayList([16]f32),
 
     // The square geometry should be changed when we implement sprites. Probably.
-    pub fn render(self: RenderPipeline, geometry: Square.SquareGeometry, positions: []const [2]f32) !void {
+    // I think this should take a flag, called "instanced" or something, which would let it toggle
+    // between rendering instanced and uniform/non-instanced.
+    // I'm not sure exactly how that should be worked out or how instanced vs non instanced stuff
+    // should be organized. Right now (02/26/2026) the VBO/VAO is associated with the geometry,
+    // not the render pipeline.
+    pub fn render(self: *RenderPipeline, geometry: SquareGeometry, squares: []const Square) !void {
         // Render
+        // This clears the screen
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
+
+        // Reuse memory
+        self.matrices.clearRetainingCapacity();
+
+        for (squares) |square| {
+            const square_trans = zm.Mat4f.translation(square.position[0], square.position[1], 0.0);
+            const scale = zm.Mat4f.scaling(square.width, square.height, 1.0);
+
+            // You could add rotation and stuff onto this.
+            // This has to be transposed here because it isn't tranposed by the setMat4f
+            // function like the projection matrix is.
+            // I'm not sure how efficient this is.
+            const modelM = square_trans.multiply(scale).transpose();
+
+            // Add to the list of things to be drawn.
+            try self.matrices.append(self.allocator, flattenMat4(modelM.data));
+        }
+
+        // Send the instance data
+        geometry.updateInstanceData(self.matrices.items);
 
         // Draw the square
         self.shader.use();
         self.shader.setMat4f("projection", flattenMat4(self.projection));
 
-        for (positions) |position| {
-            const square_trans = zm.Mat4f.translation(position[0], position[1], 0.0);
-            const scale = zm.Mat4f.scaling(300.0, 300.0, 1.0);
-
-            // You could add rotation and stuff onto this.
-            const modelM = square_trans.multiply(scale);
-
-            self.shader.setMat4f("model", flattenMat4(modelM.data));
-
-            // Draw square using indices
-            geometry.draw();
-        }
+        // Draw em all. We're sending the instance count here.
+        geometry.drawInstanced(@intCast(squares.len));
     }
 
     pub fn init(allocator: std.mem.Allocator) RenderPipeline {
@@ -72,63 +92,23 @@ pub const RenderPipeline = struct {
             "src/rendering/shaders/triangle_shader.frag",
         );
 
-        // TODO refactor texture loading
-        var read_buffer: [zigimg.io.DEFAULT_BUFFER_SIZE]u8 = undefined;
-        var image = zigimg.Image.fromFilePath(allocator, "src/font.png", read_buffer[0..]) catch |err| {
-            std.debug.print("Failed to load image: {}\n", .{err});
-            std.process.exit(1);
-        };
-        defer image.deinit(allocator);
-
-        // Create OpenGL texture
-        var texture: c.GLuint = undefined;
-        c.glGenTextures(1, &texture);
-        c.glBindTexture(c.GL_TEXTURE_2D, texture);
-
-        // Set texture parameters
-        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_REPEAT);
-        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_REPEAT);
-        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
-        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
-
-        // Upload image data to GPU
-        c.glPixelStorei(c.GL_UNPACK_ALIGNMENT, 1);
-
-        const gl_format: c.GLint, const img_ptr: ?*const anyopaque = switch (image.pixels) {
-            .grayscale8 => |data| .{ c.GL_RED, @ptrCast(data.ptr) },
-            .rgb24 => |data| .{ c.GL_RGB, @ptrCast(data.ptr) },
-            .rgba32 => |data| .{ c.GL_RGBA, @ptrCast(data.ptr) },
-            else => {
-                std.debug.print("Unsupported pixel format: {}\n", .{image.pixels});
-                std.process.exit(1);
-            },
-        };
-
-        c.glTexImage2D(
-            c.GL_TEXTURE_2D,
-            0,
-            gl_format,
-            @intCast(image.width),
-            @intCast(image.height),
-            0,
-            @intCast(gl_format),
-            c.GL_UNSIGNED_BYTE,
-            img_ptr,
-        );
-        std.debug.print("Loaded texture: {}x{}\n", .{ image.width, image.height });
+        const texture = Texture.initFromFile(allocator, "src/font.png");
 
         const projM = zm.Mat4f.orthographicRH(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
 
         return RenderPipeline{
             .shader = shaderProgram,
             .projection = projM.data,
+            .allocator = allocator,
+            .matrices = .empty,
+            .texture = texture,
         };
     }
 
-    pub fn cleanup(self: RenderPipeline) !void {
-        defer c.glDeleteVertexArrays(1, &self.vao);
-        defer c.glDeleteBuffers(1, &self.vbo);
-        defer c.glDeleteBuffers(1, &self.ebo);
+    pub fn cleanup(self: *RenderPipeline) void {
+        self.matrices.deinit(self.allocator);
+        self.texture.deinit();
+        c.glDeleteProgram(self.shader.ID);
     }
 };
 
