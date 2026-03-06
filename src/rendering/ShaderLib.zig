@@ -134,3 +134,8 @@ pub fn setMat4f(self: Shader, name: [*c]const u8, value: [16]f32) void {
     const matLoc = c.glGetUniformLocation(self.ID, name);
     c.glUniformMatrix4fv(matLoc, 1, c.GL_TRUE, &value);
 }
+
+pub fn setVec3f(self: Shader, name: [*c]const u8, value: [3]f32) void {
+    const vecLoc = c.glGetUniformLocation(self.ID, name);
+    c.glUniform3f(vecLoc, value[0], value[1], value[2]);
+}
