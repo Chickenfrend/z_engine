@@ -1,5 +1,8 @@
 const std = @import("std");
 
+const BALL_START_VEL = 200;
+const BALL_ACCELERATION = 1.2;
+
 pub const PongState = struct {
     paddle_left_y: f32,
     paddle_right_y: f32,
@@ -20,8 +23,8 @@ pub const PongState = struct {
             .paddle_speed = 200,
             .game_height = window_height,
             .game_width = window_width,
-            .ball_pos = .{window_width/2, window_height/2},
-            .ball_vel = .{200, 200},
+            .ball_pos = .{ window_width / 2, window_height / 2 },
+            .ball_vel = .{ BALL_START_VEL, BALL_START_VEL },
             .left_score = 0,
             .right_score = 0,
             .ball_size = 15,
@@ -32,12 +35,12 @@ pub const PongState = struct {
     // The number here is the paddle height. This kinda sucks that it's hard coded.
     // It is just a proof of concept though.
     pub fn moveLeftPaddle(self: *PongState, direction: f32, dt: f32) void {
-        self.paddle_left_y += direction*self.paddle_speed*dt;
+        self.paddle_left_y += direction * self.paddle_speed * dt;
         self.paddle_left_y = std.math.clamp(self.paddle_left_y, 50, self.game_height - 50);
     }
 
     pub fn moveRightPaddle(self: *PongState, direction: f32, dt: f32) void {
-        self.paddle_right_y += direction*self.paddle_speed*dt;
+        self.paddle_right_y += direction * self.paddle_speed * dt;
         self.paddle_right_y = std.math.clamp(self.paddle_right_y, 50, self.game_height - 50);
     }
 
@@ -46,11 +49,11 @@ pub const PongState = struct {
         self.ball_pos[1] += self.ball_vel[1] * dt;
 
         if (self.ball_pos[1] <= 0 or self.ball_pos[1] >= self.game_height) {
-            self.ball_vel[1] = -self.ball_vel[1];
+            self.ball_vel[1] = -self.ball_vel[1] * BALL_ACCELERATION;
         }
 
         if (self.ball_pos[0] <= 0 or self.ball_pos[0] >= self.game_width) {
-            self.ball_vel[0] = -self.ball_vel[0];
+            self.ball_vel[0] = -self.ball_vel[0] * BALL_ACCELERATION;
         }
 
         checkPaddleCollision(self);
@@ -63,31 +66,33 @@ pub const PongState = struct {
         // Left paddle
         if (self.ball_pos[0] <= 20 + paddle_width and
             self.ball_vel[0] < 0 and
-            self.ball_pos[1] + self.ball_size >= self.paddle_left_y - self.paddle_height/2 and
-            self.ball_pos[1] <= self.paddle_left_y + self.paddle_height/2)
+            self.ball_pos[1] + self.ball_size >= self.paddle_left_y - self.paddle_height / 2 and
+            self.ball_pos[1] <= self.paddle_left_y + self.paddle_height / 2)
         {
-            self.ball_vel[0] = @abs(self.ball_vel[0]);
+            self.ball_vel[0] = @abs(self.ball_vel[0]) * BALL_ACCELERATION;
             self.ball_pos[0] = 20 + paddle_width; // clamp out of paddle
         }
 
         // Right paddle
         if (self.ball_pos[0] + self.ball_size >= self.game_width - 20 and
-            self.ball_pos[1] + self.ball_size >= self.paddle_right_y - self.paddle_height/2 and
-            self.ball_pos[1] <= self.paddle_right_y + self.paddle_height/2)
+            self.ball_pos[1] + self.ball_size >= self.paddle_right_y - self.paddle_height / 2 and
+            self.ball_pos[1] <= self.paddle_right_y + self.paddle_height / 2)
         {
-            self.ball_vel[0] = -@abs(self.ball_vel[0]);
+            self.ball_vel[0] = -@abs(self.ball_vel[0]) * BALL_ACCELERATION;
             self.ball_pos[0] = self.game_width - 20 - self.ball_size; // clamp out of paddle
         }
     }
 
     fn checkWallCollision(self: *PongState) void {
         if (self.ball_pos[0] < 0) {
-            self.ball_pos = .{self.game_width/2, self.game_height/2};
+            self.ball_pos = .{ self.game_width / 2, self.game_height / 2 };
             self.left_score += 1;
+            self.ball_vel = .{ BALL_START_VEL, BALL_START_VEL };
         }
         if (self.ball_pos[0] > self.game_width) {
-            self.ball_pos = .{self.game_width/2, self.game_height/2};
+            self.ball_pos = .{ self.game_width / 2, self.game_height / 2 };
             self.right_score += 1;
+            self.ball_vel = .{ BALL_START_VEL, BALL_START_VEL };
         }
     }
 };
