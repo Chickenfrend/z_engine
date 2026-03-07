@@ -95,6 +95,7 @@ pub const Window = struct {
         }
     }
 
+    // This allows resizing. It might need to be changed
     pub fn getFramebufferSize(self: *Window) [2]u32 {
         var width: c_int = 0;
         var height: c_int = 0;

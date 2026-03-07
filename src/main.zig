@@ -25,7 +25,7 @@ const SquareGeometry = @import("./rendering/Square.zig").SquareGeometry;
 const Renderer = @import("./rendering/Render.zig");
 const FontRenderer = @import("./rendering/FontRenderer.zig");
 const PongState = @import("./PongState.zig").PongState;
-const Window = @import("./z_graphics/Window.zig").Window;
+const Window = @import("./window/Window.zig").Window;
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
