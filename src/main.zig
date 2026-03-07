@@ -9,15 +9,11 @@ const builtin = @import("builtin");
 
 const c = if (builtin.os.tag == .macos)
     @cImport({
-        @cDefine("GLFW_INCLUDE_NONE", "");
-        @cInclude("GLFW/glfw3.h");
         @cInclude("OpenGL/gl3.h");
     })
 else
     @cImport({
-        @cDefine("GLFW_INCLUDE_NONE", "");
         @cDefine("GL_GLEXT_PROTOTYPES", "");
-        @cInclude("GLFW/glfw3.h");
         @cInclude("GL/gl.h");
         @cInclude("GL/glext.h");
     });
@@ -29,53 +25,14 @@ const SquareGeometry = @import("./rendering/Square.zig").SquareGeometry;
 const Renderer = @import("./rendering/Render.zig");
 const FontRenderer = @import("./rendering/FontRenderer.zig");
 const PongState = @import("./PongState.zig").PongState;
+const Window = @import("./window/Window.zig").Window;
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
-pub fn setupWindow() ?*c.GLFWwindow {
-    if (c.glfwInit() == 0) {
-        std.debug.print("GLFW init failed!\n", .{});
-        return null;
-    }
-
-    // Without these hints the shaders wouldn't compile. They might need to be changed depending on your system and openGL version.
-    _ = c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
-    _ = c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MINOR, 3);
-    _ = c.glfwWindowHint(c.GLFW_OPENGL_PROFILE, c.GLFW_OPENGL_CORE_PROFILE);
-
-    // I think this is for mac only.
-    _ = c.glfwWindowHint(c.GLFW_OPENGL_FORWARD_COMPAT, c.GL_TRUE);
-
-    var window = c.glfwCreateWindow(Renderer.WindowSize.width, Renderer.WindowSize.height, "Z Engine", null, null);
-
-    if (window == null) {
-        std.debug.print("OpenGL 3.3 failed, trying 3.0...\n", .{});
-        // Fallback to OpenGL 3.0
-        _ = c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
-        _ = c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MINOR, 0);
-        window = c.glfwCreateWindow(Renderer.WindowSize.width, Renderer.WindowSize.height, "Z Engine", null, null);
-    }
-
-    if (window == null) {
-        std.debug.print("All OpenGL versions failed. GPU/driver issue.\n", .{});
-        @panic("Could not open window!");
-    }
-
-    _ = c.glfwMakeContextCurrent(window);
-
-    // Print which GPU we're using
-    const renderer = c.glGetString(c.GL_RENDERER);
-    const version = c.glGetString(c.GL_VERSION);
-    std.debug.print("Using GPU: {s}\n", .{renderer});
-    std.debug.print("OpenGL Version: {s}\n", .{version});
-
-    return window;
-}
 
 pub fn main() !void {
-    const window = setupWindow();
-
-    _ = c.glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
+    var window = try Window.init(800, 600, "Z Engine", .opengl);
+    defer window.deinit();
 
     // Setup allocators
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -146,14 +103,16 @@ pub fn main() !void {
     var fps_display: u64 = 0;
 
     var last_elapsed_ns: u64 = 0;
-    while (c.glfwWindowShouldClose(window) == 0) {
+    while (!window.shouldClose()) {
+        const size = window.getFramebufferSize();
+        c.glViewport(0, 0, @intCast(size[0]), @intCast(size[1]));
         const total_elapsed_ns = global_state.clock.read();
         const delta_ns = total_elapsed_ns - last_elapsed_ns;
         last_elapsed_ns = total_elapsed_ns;
 
         // Process Input
         const dt: f32 = @floatCast(@as(f64, @floatFromInt(delta_ns)) / std.time.ns_per_s);
-        processInput(window, &pong, dt);
+        window.processInput(&pong, dt);
         pong.update(dt);
 
         const squares = [_]Square{
@@ -184,40 +143,15 @@ pub fn main() !void {
             last_second += 1;
         }
 
-        c.glfwSwapBuffers(window);
+        window.swapBuffers();
         num_frames += 1;
-        c.glfwPollEvents();
+        window.pollEvents();
     }
-
-    c.glfwTerminate();
 
     return;
 }
 
-fn frame_buffer_size_callback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.c) void {
-    _ = window;
-    c.glViewport(0, 0, width, height);
-}
 
-fn processInput(window: ?*c.GLFWwindow, pong: *PongState, dt: f32) void {
-    if (c.glfwGetKey(window, c.GLFW_KEY_ESCAPE) == c.GLFW_PRESS) {
-        c.glfwSetWindowShouldClose(window, 1);
-    }
-    if (c.glfwGetKey(window, c.GLFW_KEY_W) == c.GLFW_PRESS) {
-        pong.moveLeftPaddle(-1.0, dt);
-    }
-    if (c.glfwGetKey(window, c.GLFW_KEY_S) == c.GLFW_PRESS) {
-        pong.moveLeftPaddle(1.0, dt);
-    }
-    if (c.glfwGetKey(window, c.GLFW_KEY_UP) == c.GLFW_PRESS) {
-        pong.moveRightPaddle(-1.0, dt);
-    }
-    if (c.glfwGetKey(window, c.GLFW_KEY_DOWN) == c.GLFW_PRESS) {
-        pong.moveRightPaddle(1.0, dt);
-    }
-
-
-}
 
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
 const lib = @import("zig-opengl_lib");

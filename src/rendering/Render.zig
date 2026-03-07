@@ -90,11 +90,6 @@ pub const RenderPipeline = struct {
         c.glGetIntegerv(c.GL_CURRENT_PROGRAM, &bound_program);
         var blend_enabled: c.GLboolean = 0;
         c.glGetBooleanv(c.GL_BLEND, &blend_enabled);
-        std.debug.print("texture: {d} (expected {d}), program: {d} (expected {d}), blend: {d}\n", .{
-            bound_texture, self.texture.id,
-            bound_program, self.shader.ID,
-            blend_enabled,
-        });
         // Draw em all. We're sending the instance count here.
         geometry.drawInstanced(@intCast(squares.len));
     }
