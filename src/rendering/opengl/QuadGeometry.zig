@@ -92,11 +92,6 @@ pub const QuadGeometry = struct {
     }
 
 
-    pub fn drawInstanced(self: *const QuadGeometry, instance_count: c_int) void {
-        c.glBindVertexArray(self.VAO);
-        c.glDrawElementsInstanced(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null, instance_count);
-    }
-
     pub fn updateInstanceData(self: *const QuadGeometry, matrices: []const [16]f32) void {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.instance_VBO);
         c.glBufferData(

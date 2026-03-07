@@ -38,6 +38,8 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
     return @as(*const [16]f32, @ptrCast(&mat)).*;
 }
 
+// This is really the "openGl" specific renderer. This should be moved and replaced with a 
+// backend-agnostic interface.
 pub const RenderPipeline = struct {
     shader: Shader,
     texture: Texture,

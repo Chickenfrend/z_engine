@@ -1,10 +1,9 @@
 // File containing main renderer loop
 
-const Shader = @import("ShaderLib.zig");
-const SquareGeometry = @import("./Square.zig").SquareGeometry;
+const Shader = @import("../ShaderLib.zig");
+const DrawCommand = @import("../DrawCommand.zig").DrawCommand;
 const QuadGeometry = @import("./QuadGeometry.zig").QuadGeometry;
-const Square = @import("./Square.zig").Square;
-const Texture = @import ("./Texture.zig").Texture;
+const Texture = @import ("../Texture.zig").Texture;
 
 const std = @import("std");
 const zm = @import("zm");
@@ -39,8 +38,6 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
     return @as(*const [16]f32, @ptrCast(&mat)).*;
 }
 
-// This is really the "openGl" specific renderer. This should be moved and replaced with a 
-// backend-agnostic interface.
 pub const RenderPipeline = struct {
     shader: Shader,
     texture: Texture,
@@ -55,7 +52,7 @@ pub const RenderPipeline = struct {
     // I'm not sure exactly how that should be worked out or how instanced vs non instanced stuff
     // should be organized. Right now (02/26/2026) the VBO/VAO is associated with the geometry,
     // not the render pipeline.
-    pub fn render(self: *RenderPipeline, squares: []const Square) !void {
+    pub fn render(self: *RenderPipeline, drawCommands: []const DrawCommand) !void {
         // Render
         // This clears the screen
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -64,9 +61,9 @@ pub const RenderPipeline = struct {
         // Reuse memory
         self.matrices.clearRetainingCapacity();
 
-        for (squares) |square| {
-            const square_trans = zm.Mat4f.translation(square.position[0], square.position[1], 0.0);
-            const scale = zm.Mat4f.scaling(square.width, square.height, 1.0);
+        for (drawCommands) |command| {
+            const square_trans = zm.Mat4f.translation(command.position[0], command.position[1], 0.0);
+            const scale = zm.Mat4f.scaling(command.width, command.height, 1.0);
 
             // You could add rotation and stuff onto this.
             // This has to be transposed here because it isn't tranposed by the setMat4f
@@ -121,13 +118,29 @@ pub const RenderPipeline = struct {
     }
 
     pub fn draw(self: *RenderPipeline) void {
-        c.glBindVertexArray(self.VAO);
+        c.glBindVertexArray(self.geometry.VAO);
         c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
+    }
+
+    pub fn drawInstanced(self: *RenderPipeline, instance_count: c_int) void {
+        c.glBindVertexArray(self.geometry.VAO);
+        c.glDrawElementsInstanced(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null, instance_count);
+    }
+
+    pub fn updateInstanceData(self: *RenderPipeline) void {
+        c.glBindBuffer(c.GL_ARRAY_BUFFER, self.instance_VBO);
+        c.glBufferData(
+            c.GL_ARRAY_BUFFER,
+            @intCast(self.matrices.len * @sizeOf([16]f32)),
+            self.matrices.ptr,
+            c.GL_DYNAMIC_DRAW
+        );
     }
 
     pub fn cleanup(self: *RenderPipeline) void {
         self.matrices.deinit(self.allocator);
         self.texture.deinit();
+        self.geometry.deinit();
         c.glDeleteProgram(self.shader.ID);
     }
 };
