@@ -128,7 +128,7 @@ pub const RenderPipeline = struct {
     }
 
     pub fn updateInstanceData(self: *RenderPipeline) void {
-        c.glBindBuffer(c.GL_ARRAY_BUFFER, self.instance_VBO);
+        c.glBindBuffer(c.GL_ARRAY_BUFFER, self.geometry.instance_VBO);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,
             @intCast(self.matrices.len * @sizeOf([16]f32)),
