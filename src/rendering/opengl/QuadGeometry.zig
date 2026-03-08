@@ -23,10 +23,10 @@ pub const QuadGeometry = struct {
 
     // Position (x, y, z) + UV (u, v)
     const vertices = [20]f32{
-        0.5, 0.5, 0.0, 0.128, 0.21, // right top
-        0.5, -0.5, 0.0, 0.128, 0.1, // right bottom
-        -0.5, -0.5, 0.0, 0.06, 0.1, // left bottom
-        -0.5, 0.5, 0.0, 0.06, 0.21, // left top
+        0.5, 0.5, 0.0, // right top
+        0.5, -0.5, 0.0, // right bottom
+        -0.5, -0.5, 0.0, // left bottom
+        -0.5, 0.5, 0.0, // left top
     };
 
     const indices = [6]u32{
@@ -91,14 +91,4 @@ pub const QuadGeometry = struct {
         c.glDeleteBuffers(1, &self.instance_VBO);
     }
 
-
-    pub fn updateInstanceData(self: *const QuadGeometry, matrices: []const [16]f32) void {
-        c.glBindBuffer(c.GL_ARRAY_BUFFER, self.instance_VBO);
-        c.glBufferData(
-            c.GL_ARRAY_BUFFER,
-            @intCast(matrices.len * @sizeOf([16]f32)),
-            matrices.ptr,
-            c.GL_DYNAMIC_DRAW
-        );
-    }
 } ;

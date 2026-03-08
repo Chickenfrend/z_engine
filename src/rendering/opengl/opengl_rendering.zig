@@ -76,7 +76,7 @@ pub const RenderPipeline = struct {
         }
 
         // Send the instance data
-        self.geometry.updateInstanceData(self.matrices.items);
+        self.updateInstanceData(self.matrices.items);
 
         // Draw the square
         self.shader.use();
@@ -92,7 +92,7 @@ pub const RenderPipeline = struct {
         var blend_enabled: c.GLboolean = 0;
         c.glGetBooleanv(c.GL_BLEND, &blend_enabled);
         // Draw em all. We're sending the instance count here.
-        self.geometry.drawInstanced(@intCast(squares.len));
+        self.drawInstanced(@intCast(drawCommands.len));
     }
 
     pub fn init(allocator: std.mem.Allocator) RenderPipeline {
