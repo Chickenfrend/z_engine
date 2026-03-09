@@ -38,7 +38,7 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
     return @as(*const [16]f32, @ptrCast(&mat)).*;
 }
 
-pub const RenderPipeline = struct {
+pub const OpenGLBackend = struct {
     shader: Shader,
     texture: Texture,
     projection: [4][4]f32,
@@ -52,7 +52,7 @@ pub const RenderPipeline = struct {
     // I'm not sure exactly how that should be worked out or how instanced vs non instanced stuff
     // should be organized. Right now (02/26/2026) the VBO/VAO is associated with the geometry,
     // not the render pipeline.
-    pub fn render(self: *RenderPipeline, drawCommands: []const DrawCommand) !void {
+    pub fn render(self: *OpenGLBackend, drawCommands: []const DrawCommand) !void {
         // Render
         // This clears the screen
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -95,7 +95,7 @@ pub const RenderPipeline = struct {
         self.drawInstanced(@intCast(drawCommands.len));
     }
 
-    pub fn init(allocator: std.mem.Allocator) RenderPipeline {
+    pub fn init(allocator: std.mem.Allocator) OpenGLBackend {
         const shaderProgram: Shader = Shader.create(
             allocator,
             "src/rendering/shaders/position_shader.vs",
@@ -107,7 +107,7 @@ pub const RenderPipeline = struct {
 
         const projM = zm.Mat4f.orthographicRH(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
 
-        return RenderPipeline{
+        return OpenGLBackend{
             .shader = shaderProgram,
             .projection = projM.data,
             .allocator = allocator,
@@ -117,17 +117,17 @@ pub const RenderPipeline = struct {
         };
     }
 
-    pub fn draw(self: *RenderPipeline) void {
+    pub fn draw(self: *OpenGLBackend) void {
         c.glBindVertexArray(self.geometry.VAO);
         c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
     }
 
-    pub fn drawInstanced(self: *RenderPipeline, instance_count: c_int) void {
+    pub fn drawInstanced(self: *OpenGLBackend, instance_count: c_int) void {
         c.glBindVertexArray(self.geometry.VAO);
         c.glDrawElementsInstanced(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null, instance_count);
     }
 
-    pub fn updateInstanceData(self: *RenderPipeline) void {
+    pub fn updateInstanceData(self: *OpenGLBackend) void {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.geometry.instance_VBO);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,
@@ -137,7 +137,7 @@ pub const RenderPipeline = struct {
         );
     }
 
-    pub fn cleanup(self: *RenderPipeline) void {
+    pub fn cleanup(self: *OpenGLBackend) void {
         self.matrices.deinit(self.allocator);
         self.texture.deinit();
         self.geometry.deinit();
