@@ -1,7 +1,7 @@
 const std = @import("std");
 const GraphicsApi = @import("../z_graphics/Window.zig").GraphicsApi;
 const DrawCommand = @import("./DrawCommand.zig").DrawCommand;
-const OpenGLBackend = @import("./opengl/OpenGLBackend.zig").OpenGlBackend;
+const OpenGLBackend = @import("./opengl/OpenGLBackend.zig").OpenGLBackend;
 
 const BackendImpl = union(enum) {
     opengl: OpenGLBackend,
@@ -23,9 +23,9 @@ pub const Backend = struct {
         };
     }
 
-    pub fn submit(self: *Backend, cmd: DrawCommand) void {
+    pub fn submit(self: *Backend, commands: []DrawCommand) void {
         switch (self.impl) {
-            .opengl => |*gl| gl.submit(cmd),
+            .opengl => |*gl| gl.render(commands),
             .vulkan => unreachable,
         }
     }
