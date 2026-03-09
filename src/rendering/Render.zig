@@ -4,7 +4,7 @@ const Shader = @import("ShaderLib.zig");
 const SquareGeometry = @import("./Square.zig").SquareGeometry;
 const Square = @import("./Square.zig").Square;
 const Texture = @import ("./Texture.zig").Texture;
-const DrawCommand = @import("./DrawCommand.zig").DrawCommand;
+const DrawCommand = @import("./Drawable.zig").DrawCommand;
 
 // Maybe the GraphicsApi enum should not live in the window module.
 const GraphicsApi = @import("../window/Window.zig").GraphicsApi;

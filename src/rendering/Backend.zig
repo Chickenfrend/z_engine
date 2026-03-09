@@ -1,6 +1,6 @@
 const std = @import("std");
 const GraphicsApi = @import("../z_graphics/Window.zig").GraphicsApi;
-const DrawCommand = @import("./DrawCommand.zig").DrawCommand;
+const DrawCommand = @import("./Drawable.zig").DrawCommand;
 const OpenGLBackend = @import("./opengl/OpenGLBackend.zig").OpenGLBackend;
 
 const BackendImpl = union(enum) {
