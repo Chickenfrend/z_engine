@@ -30,10 +30,6 @@ pub const WindowSize = struct {
     pub const height: u32 = 600;
 };
 
-// Rendering is currently only rendering squares. We should modify this and
-// add batch rendering.
-//
-// An easy thing to do would be to add some kind of abstract geometry struct.
 fn flattenMat4(mat: [4][4]f32) [16]f32 {
     return @as(*const [16]f32, @ptrCast(&mat)).*;
 }

@@ -7,6 +7,9 @@
 // Or, and I think this is probably the direction we should go, add vertices as data here.
 // It's possible different back ends might handle vertices and indices differently.
 // But we could always pick one method and adjust for that in the backend code.
+//
+// Actually. This should have a mesh and a material, I think. 
+// Different shapes would have different meshes.
 pub const DrawCommand = struct {
     position: [2]f32,
     width: f32,
@@ -15,4 +18,9 @@ pub const DrawCommand = struct {
     uv_offset: [2]f32,
     uv_size: [2]f32,
     blend: bool,
+};
+
+pub const Drawable = union(enum) {
+    square: ,
+    sprite: SpriteDrawable,
 };
