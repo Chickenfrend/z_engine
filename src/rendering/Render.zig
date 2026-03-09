@@ -47,7 +47,7 @@ pub const Renderer = struct {
 
     pub fn draw(self: *Renderer, drawable: Drawable) void {
         const cmd = switch (drawable) {
-            .rect => |q| q.drawCommand(),
+            .rect => |r| r.drawCommand(),
             .sprite => |s| s.drawCommand(),
         };
         self.backend.render(cmd);
