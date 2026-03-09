@@ -5,6 +5,8 @@ const SquareGeometry = @import("./Square.zig").SquareGeometry;
 const Square = @import("./Square.zig").Square;
 const Texture = @import ("./Texture.zig").Texture;
 const DrawCommand = @import("./Drawable.zig").DrawCommand;
+const Drawable = @import("./Drawable.zig").Drawable;
+const Backend = @import("./Backend.zig").Backend;
 
 // Maybe the GraphicsApi enum should not live in the window module.
 const GraphicsApi = @import("../window/Window.zig").GraphicsApi;
@@ -34,14 +36,23 @@ else
 // Later, it will have to sort things as they enter and so on.
 // We can update flush then.
 pub const Renderer = struct {
-    api: GraphicsApi,
-    RenderQueue: []DrawCommand,
+    backend: Backend,
+    renderQueue: std.ArrayList(DrawCommand),
 
-    pub fn init(api: GraphicsApi) Renderer {
+    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi) Renderer {
         return Renderer {
-            .api = api,
+            .Backend = Backend.init(allocator, api),
         };
     }
 
+    pub fn draw(self: *Renderer, drawable: Drawable) void {
+        const cmd = switch (drawable) {
+            .rect => |q| q.drawCommand(),
+            .sprite => |s| s.drawCommand(),
+        };
+        self.backend.render(cmd);
+    }
 
 };
+
+// Render queue here.

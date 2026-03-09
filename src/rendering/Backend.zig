@@ -8,9 +8,8 @@ const BackendImpl = union(enum) {
     vulkan: void, // placeholder
 };
 
-// Right now this is being implemented directly by the public renderer.
-// I think there should be a render queue, also. I'm not certain if it should go 
-// backend->renderqueue or renderqueue->backend.
+// This is just a little abstraction layer on the backend.
+// It's here so we can support multiple backends later.
 pub const Backend = struct {
     impl: BackendImpl,
 
@@ -23,7 +22,7 @@ pub const Backend = struct {
         };
     }
 
-    pub fn submit(self: *Backend, commands: []DrawCommand) void {
+    pub fn render(self: *Backend, commands: []DrawCommand) void {
         switch (self.impl) {
             .opengl => |*gl| gl.render(commands),
             .vulkan => unreachable,
