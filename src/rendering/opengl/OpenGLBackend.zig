@@ -60,14 +60,14 @@ pub const OpenGLBackend = struct {
 
         c.glDisable(c.GL_BLEND);
         for (drawCommands) |command| {
-            const square_trans = zm.Mat4f.translation(command.position[0], command.position[1], 0.0);
+            const translation_matrix = zm.Mat4f.translation(command.position[0], command.position[1], 0.0);
             const scale = zm.Mat4f.scaling(command.width, command.height, 1.0);
 
             // You could add rotation and stuff onto this.
             // This has to be transposed here because it isn't tranposed by the setMat4f
             // function like the projection matrix is.
             // I'm not sure how efficient this is.
-            const modelM = square_trans.multiply(scale).transpose();
+            const modelM = translation_matrix.multiply(scale).transpose();
 
             // Add to the list of things to be drawn.
             // Since the renderer (the public version) passes in command lists now, this 
@@ -79,7 +79,7 @@ pub const OpenGLBackend = struct {
         // Send the instance data
         self.updateInstanceData();
 
-        // Draw the square
+        // Draw
         self.shader.use();
         c.glActiveTexture(c.GL_TEXTURE0);
         c.glBindTexture(c.GL_TEXTURE_2D, self.texture.id);
