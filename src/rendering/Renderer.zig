@@ -60,8 +60,13 @@ pub const Renderer = struct {
         try self.renderQueue.append(self.allocator, cmd);
     }
 
-    pub fn endFrame(self: *Renderer) !void {
+    pub fn beginDrawing(self: *Renderer) void {
+        self.backend.beginDrawing();
+    }
+
+    pub fn endDrawing(self: *Renderer) !void {
         try self.backend.render(self.renderQueue.items);
+        self.renderQueue.clearRetainingCapacity();
     }
 
     pub fn deinit(self: *Renderer) void {

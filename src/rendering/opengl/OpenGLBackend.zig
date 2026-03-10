@@ -42,21 +42,23 @@ pub const OpenGLBackend = struct {
     matrices: std.ArrayList([16]f32),
     geometry: QuadGeometry,
 
-    // The square geometry should be changed when we implement sprites. Probably.
     // I think this should take a flag, called "instanced" or something, which would let it toggle
     // between rendering instanced and uniform/non-instanced.
     // I'm not sure exactly how that should be worked out or how instanced vs non instanced stuff
     // should be organized. Right now (02/26/2026) the VBO/VAO is associated with the geometry,
     // not the render pipeline.
-    pub fn render(self: *OpenGLBackend, drawCommands: []const DrawCommand) !void {
-        // Render
-        // This clears the screen
+    
+    pub fn beginDrawing(self: *OpenGLBackend) void {
+        _ = self;
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
+    }
 
+    pub fn render(self: *OpenGLBackend, drawCommands: []const DrawCommand) !void {
         // Reuse memory
         self.matrices.clearRetainingCapacity();
 
+        c.glDisable(c.GL_BLEND);
         for (drawCommands) |command| {
             const square_trans = zm.Mat4f.translation(command.position[0], command.position[1], 0.0);
             const scale = zm.Mat4f.scaling(command.width, command.height, 1.0);
@@ -68,6 +70,9 @@ pub const OpenGLBackend = struct {
             const modelM = square_trans.multiply(scale).transpose();
 
             // Add to the list of things to be drawn.
+            // Since the renderer (the public version) passes in command lists now, this 
+            // matrices variable that the OpenGLBackend owns might not need to exist anymore.
+            // TODO: Look into this.
             try self.matrices.append(self.allocator, flattenMat4(modelM.data));
         }
 
@@ -124,6 +129,7 @@ pub const OpenGLBackend = struct {
     }
 
     pub fn updateInstanceData(self: *OpenGLBackend) void {
+        std.debug.print("uploading {d} matrices\n", .{self.matrices.items.len});
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.geometry.instance_VBO);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,

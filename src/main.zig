@@ -20,7 +20,6 @@ else
 
 const state = @import("./ecs/state.zig");
 const Shader = @import("./rendering/ShaderLib.zig");
-const SquareGeometry = @import("./rendering/Square.zig").SquareGeometry;
 const FontRenderer = @import("./rendering/FontRenderer.zig");
 const PongState = @import("./PongState.zig").PongState;
 const Window = @import("./window/Window.zig").Window;
@@ -45,9 +44,6 @@ pub fn main() !void {
 
     var render_pipeline = try Renderer.init(arena_allocator, .opengl);
     defer render_pipeline.deinit();
-
-    var geometry = SquareGeometry.init();
-    defer geometry.deinit();
     
     var pong = PongState.init(@floatFromInt(window.width), @floatFromInt(window.height));
 
@@ -121,6 +117,7 @@ pub fn main() !void {
             .{ .rect = .{ .position = .{ 780, pong.paddle_right_y }, .width = 20, .height = 100, .color = .{1,1,1,1} } },
             .{ .rect = .{ .position = pong.ball_pos, .width = 15, .height = 15, .color = .{1,1,1,1} } },
         };
+        render_pipeline.beginDrawing();
         for (rects) |rect| {
             try render_pipeline.draw(rect);
         }
@@ -128,6 +125,7 @@ pub fn main() !void {
         // Render text if font is loaded
         if (font_renderer) |*fr| {
             // Title text
+        std.debug.print("clearing screen\n", .{});
             fr.renderText("Z Engine - Game Engine", 10.0, 10.0, 0.8, .{ 1.0, 1.0, 1.0 });
 
             // FPS counter
@@ -145,7 +143,7 @@ pub fn main() !void {
             last_second += 1;
         }
 
-        try render_pipeline.endFrame();
+        try render_pipeline.endDrawing();
         window.swapBuffers();
         num_frames += 1;
         window.pollEvents();
