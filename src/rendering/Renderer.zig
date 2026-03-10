@@ -1,0 +1,60 @@
+// File containing main renderer loop
+
+const Shader = @import("ShaderLib.zig");
+const SquareGeometry = @import("./Square.zig").SquareGeometry;
+const Square = @import("./Square.zig").Square;
+const Texture = @import ("./Texture.zig").Texture;
+const DrawCommand = @import("./Drawable.zig").DrawCommand;
+const Drawable = @import("./Drawable.zig").Drawable;
+const Backend = @import("./Backend.zig").Backend;
+
+// Maybe the GraphicsApi enum should not live in the window module.
+const GraphicsApi = @import("../window/Window.zig").GraphicsApi;
+
+const std = @import("std");
+
+// Right now, the render queue can just be an array.
+// Later, it will have to sort things as they enter and so on.
+// We can update flush then.
+// The renderQueue here should be turned into some array with a static size.
+// Render queue should be its own struct which you can add to,
+// which can also get full. When it gets full, we should force a flush.
+// When we do this, we might be able to get rid of some of the error returns.
+pub const Renderer = struct {
+    allocator: std.mem.Allocator,
+    backend: Backend,
+    renderQueue: std.ArrayList(DrawCommand),
+
+    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi) !Renderer {
+        return Renderer {
+            .allocator = allocator,
+            .backend = Backend.init(allocator, api),
+            .renderQueue = .empty,
+        };
+    }
+
+    pub fn draw(self: *Renderer, drawable: Drawable) !void {
+        const cmd = switch (drawable) {
+            .rect => |r| r.drawCommand(),
+            .sprite => |s| s.drawCommand(),
+        };
+        try self.renderQueue.append(self.allocator, cmd);
+    }
+
+    pub fn beginDrawing(self: *Renderer) void {
+        self.backend.beginDrawing();
+    }
+
+    pub fn endDrawing(self: *Renderer) !void {
+        try self.backend.render(self.renderQueue.items);
+        self.renderQueue.clearRetainingCapacity();
+    }
+
+    pub fn deinit(self: *Renderer) void {
+        self.backend.deinit();
+        self.renderQueue.deinit(self.allocator);
+    }
+
+};
+
+// Render queue here.

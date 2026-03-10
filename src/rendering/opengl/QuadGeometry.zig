@@ -15,7 +15,7 @@ else
         @cInclude("GL/glext.h");
     });
 
-pub const SquareGeometry = struct {
+pub const QuadGeometry = struct {
     VAO: c_uint,
     VBO: c_uint,
     EBO: c_uint,
@@ -23,10 +23,10 @@ pub const SquareGeometry = struct {
 
     // Position (x, y, z) + UV (u, v)
     const vertices = [20]f32{
-        0.5, 0.5, 0.0, 0.128, 0.21, // right top
-        0.5, -0.5, 0.0, 0.128, 0.1, // right bottom
-        -0.5, -0.5, 0.0, 0.06, 0.1, // left bottom
-        -0.5, 0.5, 0.0, 0.06, 0.21, // left top
+        0.5, 0.5, 0.0, 1.0, 1.0, // right top
+        0.5, -0.5, 0.0, 1.0, 0.0,  // right bottom
+        -0.5, -0.5, 0.0, 0.0, 0.0,// left bottom
+        -0.5, 0.5, 0.0, 0.0, 1.0, // left top
     };
 
     const indices = [6]u32{
@@ -34,8 +34,8 @@ pub const SquareGeometry = struct {
         1, 2, 3,
     };
 
-    pub fn init() SquareGeometry {
-        var geo: SquareGeometry = undefined;
+    pub fn init() QuadGeometry {
+        var geo: QuadGeometry = undefined;
 
         c.glGenVertexArrays(1, &geo.VAO);
         c.glGenBuffers(1, &geo.VBO);
@@ -84,35 +84,11 @@ pub const SquareGeometry = struct {
         return geo;
     }
 
-    pub fn deinit(self: *SquareGeometry) void {
+    pub fn deinit(self: *QuadGeometry) void {
         c.glDeleteVertexArrays(1, &self.VAO);
         c.glDeleteBuffers(1, &self.VBO);
         c.glDeleteBuffers(1, &self.EBO);
         c.glDeleteBuffers(1, &self.instance_VBO);
     }
 
-    pub fn draw(self: *const SquareGeometry) void {
-        c.glBindVertexArray(self.VAO);
-        c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
-    }
-
-    pub fn drawInstanced(self: *const SquareGeometry, instance_count: c_int) void {
-        c.glBindVertexArray(self.VAO);
-        c.glDrawElementsInstanced(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null, instance_count);
-    }
-
-    pub fn updateInstanceData(self: *const SquareGeometry, matrices: []const [16]f32) void {
-        c.glBindBuffer(c.GL_ARRAY_BUFFER, self.instance_VBO);
-        c.glBufferData(
-            c.GL_ARRAY_BUFFER,
-            @intCast(matrices.len * @sizeOf([16]f32)),
-            matrices.ptr,
-            c.GL_DYNAMIC_DRAW
-        );
-    }
-};
-pub const Square = struct {
-    position: [2]f32,
-    width: f32,
-    height: f32,
-};
+} ;
