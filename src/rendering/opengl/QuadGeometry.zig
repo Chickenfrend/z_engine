@@ -23,10 +23,10 @@ pub const QuadGeometry = struct {
 
     // Position (x, y, z) + UV (u, v)
     const vertices = [20]f32{
-        0.5, 0.5, 0.0, 0.128, 0.21, // right top
-        0.5, -0.5, 0.0, 0.128, 0.1, // right bottom
-        -0.5, -0.5, 0.0, 0.06, 0.1, // left bottom
-        -0.5, 0.5, 0.0, 0.06, 0.21, // left top
+        1.0, 1.0, 0.0, 0.128, 0.21, // right top (y=1 in screen space = bottom of quad)
+        1.0, 0.0, 0.0, 0.128, 0.1,  // right bottom
+        0.0, 0.0, 0.0, 0.06,  0.1,  // left bottom
+        0.0, 1.0, 0.0, 0.06,  0.21, // left top   
     };
 
     const indices = [6]u32{

@@ -54,12 +54,12 @@ pub const PongState = struct {
     // It is just a proof of concept though.
     pub fn moveLeftPaddle(self: *PongState, direction: f32, dt: f32) void {
         self.paddle_left_y += direction * self.paddle_speed * dt;
-        self.paddle_left_y = std.math.clamp(self.paddle_left_y, 50, self.game_height - 50);
+        self.paddle_left_y = std.math.clamp(self.paddle_left_y, 0, self.game_height - self.paddle_height);
     }
 
     pub fn moveRightPaddle(self: *PongState, direction: f32, dt: f32) void {
         self.paddle_right_y += direction * self.paddle_speed * dt;
-        self.paddle_right_y = std.math.clamp(self.paddle_right_y, 50, self.game_height - 50);
+        self.paddle_right_y = std.math.clamp(self.paddle_right_y, 0, self.game_height - self.paddle_height);
     }
 
     pub fn update(self: *PongState, dt: f32) void {
@@ -83,9 +83,8 @@ pub const PongState = struct {
 
         // Left paddle
         if (self.ball_pos[0] <= 20 + paddle_width and
-            self.ball_vel[0] < 0 and
-            self.ball_pos[1] + self.ball_size >= self.paddle_left_y - self.paddle_height / 2 and
-            self.ball_pos[1] <= self.paddle_left_y + self.paddle_height / 2)
+            self.ball_pos[1] + self.ball_size >= self.paddle_left_y and
+            self.ball_pos[1] <= self.paddle_left_y + self.paddle_height)
         {
             self.ball_vel[0] = @abs(self.ball_vel[0]) * BALL_ACCELERATION;
             self.ball_pos[0] = 20 + paddle_width; // clamp out of paddle
@@ -93,8 +92,8 @@ pub const PongState = struct {
 
         // Right paddle
         if (self.ball_pos[0] + self.ball_size >= self.game_width - 20 and
-            self.ball_pos[1] + self.ball_size >= self.paddle_right_y - self.paddle_height / 2 and
-            self.ball_pos[1] <= self.paddle_right_y + self.paddle_height / 2)
+            self.ball_pos[1] + self.ball_size >= self.paddle_right_y and
+            self.ball_pos[1] <= self.paddle_right_y + self.paddle_height)
         {
             self.ball_vel[0] = -@abs(self.ball_vel[0]) * BALL_ACCELERATION;
             self.ball_pos[0] = self.game_width - 20 - self.ball_size; // clamp out of paddle
