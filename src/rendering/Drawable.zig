@@ -31,7 +31,7 @@ pub const RectDrawable = struct {
     height: f32,
     color: [4]f32,
 
-    pub fn drawCommand(self: *RectDrawable) DrawCommand {
+    pub fn drawCommand(self: RectDrawable) DrawCommand {
         return DrawCommand {
             .position = self.position,
             .width = self.width,
@@ -56,7 +56,7 @@ pub const SpriteDrawable = struct {
     uv_offset: [2]f32,
     uv_size: [2]f32,
 
-    pub fn drawCommand(self: *SpriteDrawable) DrawCommand {
+    pub fn drawCommand(self: SpriteDrawable) DrawCommand {
         return DrawCommand {
             .position = self.position,
             .width = self.width,

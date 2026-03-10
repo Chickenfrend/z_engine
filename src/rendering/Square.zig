@@ -1,4 +1,3 @@
-const Rendering = @import("./Render.zig");
 const builtin = @import("builtin");
 
 const c = if (builtin.os.tag == .macos)

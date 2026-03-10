@@ -22,7 +22,7 @@ pub const QuadGeometry = struct {
     instance_VBO: c_uint,
 
     // Position (x, y, z) + UV (u, v)
-    const vertices = [20]f32{
+    const vertices = [12]f32{
         0.5, 0.5, 0.0, // right top
         0.5, -0.5, 0.0, // right bottom
         -0.5, -0.5, 0.0, // left bottom

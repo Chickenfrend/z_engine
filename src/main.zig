@@ -20,12 +20,12 @@ else
 
 const state = @import("./ecs/state.zig");
 const Shader = @import("./rendering/ShaderLib.zig");
-const Square = @import("./rendering/Square.zig").Square;
 const SquareGeometry = @import("./rendering/Square.zig").SquareGeometry;
-const Renderer = @import("./rendering/Render.zig");
 const FontRenderer = @import("./rendering/FontRenderer.zig");
 const PongState = @import("./PongState.zig").PongState;
 const Window = @import("./window/Window.zig").Window;
+const Renderer = @import("./rendering/Renderer.zig").Renderer;
+const Drawable = @import("./rendering/Drawable.zig").Drawable;
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
@@ -43,14 +43,13 @@ pub fn main() !void {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    // This is the creation of the shader program.
-    var render_pipeline = Renderer.RenderPipeline.init(arena_allocator);
-    defer render_pipeline.cleanup();
+    var render_pipeline = try Renderer.init(arena_allocator, .opengl);
+    defer render_pipeline.deinit();
 
     var geometry = SquareGeometry.init();
     defer geometry.deinit();
     
-    var pong = PongState.init(Renderer.WindowSize.width, Renderer.WindowSize.height);
+    var pong = PongState.init(@floatFromInt(window.width), @floatFromInt(window.height));
 
 
     var global_state: state.GlobalState = .{
@@ -72,12 +71,14 @@ pub fn main() !void {
     };
 
     var font_renderer: ?FontRenderer.FontRenderer = null;
+    // This is bad lol. Should be removed. Also, fonts should be refactored to use the main render pipeline somehow.
+    const projection = render_pipeline.backend.impl.opengl.projection; 
     for (font_paths) |font_path| {
         font_renderer = FontRenderer.FontRenderer.init(
             arena_allocator,
             font_path,
             48,
-            render_pipeline.projection,
+            projection,
         ) catch |err| {
             std.debug.print("Failed to load font from {s}: {s}\n", .{ font_path, @errorName(err) });
             continue;
@@ -115,13 +116,14 @@ pub fn main() !void {
         window.processInput(&pong, dt);
         pong.update(dt);
 
-        const squares = [_]Square{
-            .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100 },
-            .{ .position = .{ 780, pong.paddle_right_y }, .width = 20, .height = 100 },
-            .{ .position = pong.ball_pos, .width = 15, .height = 15 },
+        const rects = [_]Drawable{
+            .{ .rect = .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100, .color = .{1,1,1,1} } },
+            .{ .rect = .{ .position = .{ 780, pong.paddle_right_y }, .width = 20, .height = 100, .color = .{1,1,1,1} } },
+            .{ .rect = .{ .position = pong.ball_pos, .width = 15, .height = 15, .color = .{1,1,1,1} } },
         };
-
-        try render_pipeline.render(geometry, &squares);
+        for (rects) |rect| {
+            try render_pipeline.draw(rect);
+        }
 
         // Render text if font is loaded
         if (font_renderer) |*fr| {
@@ -133,7 +135,7 @@ pub fn main() !void {
             fr.renderText(fps_text, 10.0, 60.0, 0.6, .{ 0.0, 1.0, 0.0 });
 
             // Controls hint
-            fr.renderText("Press ESC to exit", 10.0, @as(f32, @floatFromInt(Renderer.WindowSize.height)) - 60.0, 0.5, .{ 0.7, 0.7, 0.7 });
+            fr.renderText("Press ESC to exit", 10.0, @as(f32, @floatFromInt(window.height)) - 60.0, 0.5, .{ 0.7, 0.7, 0.7 });
         }
 
         // Update FPS counter once per second
@@ -143,6 +145,7 @@ pub fn main() !void {
             last_second += 1;
         }
 
+        try render_pipeline.endFrame();
         window.swapBuffers();
         num_frames += 1;
         window.pollEvents();

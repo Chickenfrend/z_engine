@@ -1,5 +1,5 @@
 const std = @import("std");
-const GraphicsApi = @import("../z_graphics/Window.zig").GraphicsApi;
+const GraphicsApi = @import("../window/Window.zig").GraphicsApi;
 const DrawCommand = @import("./Drawable.zig").DrawCommand;
 const OpenGLBackend = @import("./opengl/OpenGLBackend.zig").OpenGLBackend;
 
@@ -13,18 +13,18 @@ const BackendImpl = union(enum) {
 pub const Backend = struct {
     impl: BackendImpl,
 
-    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi) !Backend {
+    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi) Backend {
         return switch (api) {
             .opengl => Backend{
                 .impl = .{ .opengl = OpenGLBackend.init(allocator) },
             },
-            .vulkan => return error.NotYetSupported,
+            .vulkan => @panic("Vulkan not yet support"),
         };
     }
 
-    pub fn render(self: *Backend, commands: []DrawCommand) void {
+    pub fn render(self: *Backend, commands: []DrawCommand) !void {
         switch (self.impl) {
-            .opengl => |*gl| gl.render(commands),
+            .opengl => |*gl| try gl.render(commands),
             .vulkan => unreachable,
         }
     }

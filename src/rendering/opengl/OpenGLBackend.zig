@@ -1,7 +1,7 @@
 // File containing main renderer loop
 
 const Shader = @import("../ShaderLib.zig");
-const DrawCommand = @import("../DrawCommand.zig").DrawCommand;
+const DrawCommand = @import("../Drawable.zig").DrawCommand;
 const QuadGeometry = @import("./QuadGeometry.zig").QuadGeometry;
 const Texture = @import ("../Texture.zig").Texture;
 
@@ -72,7 +72,7 @@ pub const OpenGLBackend = struct {
         }
 
         // Send the instance data
-        self.updateInstanceData(self.matrices.items);
+        self.updateInstanceData();
 
         // Draw the square
         self.shader.use();
@@ -98,7 +98,7 @@ pub const OpenGLBackend = struct {
             "src/rendering/shaders/triangle_shader.frag",
         );
 
-        const texture = Texture.initFromFile(allocator, "src/font.png");
+        const texture = Texture.initFromFile(allocator, "../../src/font.png");
         const geometry = QuadGeometry.init();
 
         const projM = zm.Mat4f.orthographicRH(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
@@ -127,8 +127,8 @@ pub const OpenGLBackend = struct {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.geometry.instance_VBO);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,
-            @intCast(self.matrices.len * @sizeOf([16]f32)),
-            self.matrices.ptr,
+            @intCast(self.matrices.items.len * @sizeOf([16]f32)),
+            self.matrices.items.ptr,
             c.GL_DYNAMIC_DRAW
         );
     }

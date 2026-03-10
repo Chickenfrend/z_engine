@@ -35,22 +35,38 @@ else
 // Right now, the render queue can just be an array.
 // Later, it will have to sort things as they enter and so on.
 // We can update flush then.
+// The renderQueue here should be turned into some array with a static size.
+// Render queue should be its own struct which you can add to,
+// which can also get full. When it gets full, we should force a flush.
+// When we do this, we might be able to get rid of some of the error returns.
 pub const Renderer = struct {
+    allocator: std.mem.Allocator,
     backend: Backend,
     renderQueue: std.ArrayList(DrawCommand),
 
-    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi) Renderer {
+    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi) !Renderer {
         return Renderer {
-            .Backend = Backend.init(allocator, api),
+            .allocator = allocator,
+            .backend = Backend.init(allocator, api),
+            .renderQueue = .empty,
         };
     }
 
-    pub fn draw(self: *Renderer, drawable: Drawable) void {
+    pub fn draw(self: *Renderer, drawable: Drawable) !void {
         const cmd = switch (drawable) {
             .rect => |r| r.drawCommand(),
             .sprite => |s| s.drawCommand(),
         };
-        self.backend.render(cmd);
+        try self.renderQueue.append(self.allocator, cmd);
+    }
+
+    pub fn endFrame(self: *Renderer) !void {
+        try self.backend.render(self.renderQueue.items);
+    }
+
+    pub fn deinit(self: *Renderer) void {
+        self.backend.deinit();
+        self.renderQueue.deinit(self.allocator);
     }
 
 };
