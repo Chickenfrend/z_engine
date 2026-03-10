@@ -114,7 +114,7 @@ pub fn main() !void {
 
         const rects = [_]Drawable{
             .{ .rect = .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100, .color = .{1,1,1,1} } },
-            .{ .rect = .{ .position = .{ 780, pong.paddle_right_y }, .width = 20, .height = 100, .color = .{1,1,1,1} } },
+            .{ .rect = .{ .position = .{ 760, pong.paddle_right_y }, .width = 20, .height = 100, .color = .{1,1,1,1} } },
             .{ .rect = .{ .position = pong.ball_pos, .width = 15, .height = 15, .color = .{1,1,1,1} } },
         };
         render_pipeline.beginDrawing();
