@@ -98,7 +98,7 @@ pub const OpenGLBackend = struct {
             "src/rendering/shaders/triangle_shader.frag",
         );
 
-        const texture = Texture.initFromFile(allocator, "../../src/font.png");
+        const texture = Texture.initFromFile(allocator, "src/font.png");
         const geometry = QuadGeometry.init();
 
         const projM = zm.Mat4f.orthographicRH(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
