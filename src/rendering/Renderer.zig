@@ -12,25 +12,6 @@ const Backend = @import("./Backend.zig").Backend;
 const GraphicsApi = @import("../window/Window.zig").GraphicsApi;
 
 const std = @import("std");
-const zm = @import("zm");
-
-const builtin = @import("builtin");
-
-const c = if (builtin.os.tag == .macos)
-    @cImport({
-        @cDefine("GLFW_INCLUDE_NONE", "");
-        @cInclude("GLFW/glfw3.h");
-        @cInclude("OpenGL/gl3.h");
-    })
-else
-    @cImport({
-        @cDefine("GLFW_INCLUDE_NONE", "");
-        @cDefine("GL_GLEXT_PROTOTYPES", "");
-        @cInclude("GLFW/glfw3.h");
-        @cInclude("GL/gl.h");
-        @cInclude("GL/glext.h");
-    });
-
 
 // Right now, the render queue can just be an array.
 // Later, it will have to sort things as they enter and so on.

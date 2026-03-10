@@ -129,7 +129,6 @@ pub const OpenGLBackend = struct {
     }
 
     pub fn updateInstanceData(self: *OpenGLBackend) void {
-        std.debug.print("uploading {d} matrices\n", .{self.matrices.items.len});
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.geometry.instance_VBO);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,

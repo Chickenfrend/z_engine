@@ -125,7 +125,6 @@ pub fn main() !void {
         // Render text if font is loaded
         if (font_renderer) |*fr| {
             // Title text
-        std.debug.print("clearing screen\n", .{});
             fr.renderText("Z Engine - Game Engine", 10.0, 10.0, 0.8, .{ 1.0, 1.0, 1.0 });
 
             // FPS counter
