@@ -4,9 +4,10 @@ const Shader = @import("ShaderLib.zig");
 const SquareGeometry = @import("./Square.zig").SquareGeometry;
 const Square = @import("./Square.zig").Square;
 const Texture = @import ("./Texture.zig").Texture;
-const DrawCommand = @import("./Drawable.zig").DrawCommand;
+const DrawCommand = @import("./Backend").DrawCommand;
 const Drawable = @import("./Drawable.zig").Drawable;
 const Backend = @import("./Backend.zig").Backend;
+const DrawParams = @import("./DrawParams.zig");
 
 // Maybe the GraphicsApi enum should not live in the window module.
 const GraphicsApi = @import("../window/Window.zig").GraphicsApi;
@@ -39,6 +40,40 @@ pub const Renderer = struct {
             .sprite => |s| s.drawCommand(),
         };
         try self.renderQueue.append(self.allocator, cmd);
+    }
+
+    pub fn drawRect(self: *Renderer, params: DrawParams.RectParams) !void {
+        const command = DrawCommand {
+            .position = params.position,
+            .width = params.width,
+            .height = params.height,
+            .uv_offset = .{0, 0},
+            .uv_size = .{1, 1},
+            .material = .{
+                .texture = null,
+                .color = params.color,
+                .blend = false,
+            }
+        };
+
+        try self.renderQueue.append(self.allocator, command);
+    }
+
+    pub fn drawSprite(self: *Renderer, params: DrawParams.RectParams) !void {
+        const command = DrawCommand {
+            .position = params.position,
+            .width = params.width,
+            .height = params.height,
+            .uv_offset = params.uv_offset,
+            .uv_size = params.uv_size,
+            .material = .{
+                .texture = params.texture,
+                .color = params.color,
+                .blend = false,
+            }
+        };
+
+        try self.renderQueue.append(self.allocator, command);
     }
 
     pub fn beginDrawing(self: *Renderer) void {
