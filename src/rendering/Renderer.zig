@@ -4,9 +4,8 @@ const Shader = @import("ShaderLib.zig");
 const SquareGeometry = @import("./Square.zig").SquareGeometry;
 const Square = @import("./Square.zig").Square;
 const Texture = @import ("./Texture.zig").Texture;
-const DrawCommand = @import("./Backend").DrawCommand;
-const Drawable = @import("./Drawable.zig").Drawable;
 const Backend = @import("./Backend.zig").Backend;
+const DrawCommand = @import("./Backend.zig").DrawCommand;
 const DrawParams = @import("./DrawParams.zig");
 
 // Maybe the GraphicsApi enum should not live in the window module.
@@ -32,14 +31,6 @@ pub const Renderer = struct {
             .backend = Backend.init(allocator, api),
             .renderQueue = .empty,
         };
-    }
-
-    pub fn draw(self: *Renderer, drawable: Drawable) !void {
-        const cmd = switch (drawable) {
-            .rect => |r| r.drawCommand(),
-            .sprite => |s| s.drawCommand(),
-        };
-        try self.renderQueue.append(self.allocator, cmd);
     }
 
     pub fn drawRect(self: *Renderer, params: DrawParams.RectParams) !void {

@@ -1,7 +1,7 @@
 // File containing main renderer loop
 
 const Shader = @import("../ShaderLib.zig");
-const DrawCommand = @import("../Drawable.zig").DrawCommand;
+const DrawCommand = @import("../Backend.zig").DrawCommand;
 const QuadGeometry = @import("./QuadGeometry.zig").QuadGeometry;
 const Texture = @import ("../Texture.zig").Texture;
 

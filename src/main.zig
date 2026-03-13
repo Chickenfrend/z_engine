@@ -24,7 +24,7 @@ const FontRenderer = @import("./rendering/FontRenderer.zig");
 const PongState = @import("./PongState.zig").PongState;
 const Window = @import("./window/Window.zig").Window;
 const Renderer = @import("./rendering/Renderer.zig").Renderer;
-const Drawable = @import("./rendering/Drawable.zig").Drawable;
+const RectParams = @import("./rendering/DrawParams.zig").RectParams;
 
 // This main functions does a lot. It creates shaders, links them, opens a window, and draws a triangle.
 // Probably we could split these aparts and have modules dedicated to shaders, a module for shapes, and so on.
@@ -112,14 +112,14 @@ pub fn main() !void {
         window.processInput(&pong, dt);
         pong.update(dt);
 
-        const rects = [_]Drawable{
-            .{ .rect = .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100, .color = .{1,1,1,1} } },
-            .{ .rect = .{ .position = .{ 760, pong.paddle_right_y }, .width = 20, .height = 100, .color = .{1,1,1,1} } },
-            .{ .rect = .{ .position = pong.ball_pos, .width = 15, .height = 15, .color = .{1,1,1,1} } },
+        const rects = [_] RectParams {
+            .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100, .color = .{1,1,1,1} },
+            .{ .position = .{ 760, pong.paddle_right_y }, .width = 20, .height = 100, .color = .{1,1,1,1} },
+            .{ .position = pong.ball_pos, .width = 15, .height = 15, .color = .{1,1,1,1} },
         };
         render_pipeline.beginDrawing();
         for (rects) |rect| {
-            try render_pipeline.draw(rect);
+            try render_pipeline.drawRect(rect);
         }
 
         // Render text if font is loaded
