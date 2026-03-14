@@ -15,6 +15,7 @@ else
     });
 
 const PongState = @import("../PongState.zig").PongState;
+const Camera2D = @import("../rendering/Camera.zig").Camera2D;
 
 pub const GraphicsApi = enum { opengl, vulkan };
 pub const OpenGlVersion = struct {major: u32, minor: u32};
@@ -77,7 +78,7 @@ pub const Window = struct {
     }
 
     // This should be moved to its own module
-    pub fn processInput(self: *Window, pong: *PongState, dt: f32) void {
+    pub fn processInput(self: *Window, pong: *PongState, camera: *Camera2D, dt: f32) void {
         if (c.glfwGetKey(self.handle, c.GLFW_KEY_ESCAPE) == c.GLFW_PRESS) {
             c.glfwSetWindowShouldClose(self.handle, 1);
         }
@@ -92,6 +93,18 @@ pub const Window = struct {
         }
         if (c.glfwGetKey(self.handle, c.GLFW_KEY_DOWN) == c.GLFW_PRESS) {
             pong.moveRightPaddle(1.0, dt);
+        }
+        if (c.glfwGetKey(self.handle, c.GLFW_KEY_K) == c.GLFW_PRESS) {
+            camera.position[1] += 5.0;
+        }
+        if (c.glfwGetKey(self.handle, c.GLFW_KEY_J) == c.GLFW_PRESS) {
+            camera.position[1] -= 5.0;
+        }
+        if (c.glfwGetKey(self.handle, c.GLFW_KEY_H) == c.GLFW_PRESS) {
+            camera.position[0] -= 5.0;
+        }
+        if (c.glfwGetKey(self.handle, c.GLFW_KEY_L) == c.GLFW_PRESS) {
+            camera.position[0] += 5.0;
         }
     }
 

@@ -109,7 +109,7 @@ pub fn main() !void {
 
         // Process Input
         const dt: f32 = @floatCast(@as(f64, @floatFromInt(delta_ns)) / std.time.ns_per_s);
-        window.processInput(&pong, dt);
+        window.processInput(&pong, &render_pipeline.camera, dt);
         pong.update(dt);
 
         const rects = [_] RectParams {
