@@ -1,6 +1,7 @@
 const std = @import("std");
 const GraphicsApi = @import("../window/Window.zig").GraphicsApi;
 const OpenGLBackend = @import("./opengl/OpenGLBackend.zig").OpenGLBackend;
+const Camera2D = @import("./Camera.zig").Camera2D;
 
 pub const Material = struct {
     texture: ?u32,
@@ -32,9 +33,9 @@ const BackendImpl = union(enum) {
 pub const Backend = struct {
     impl: BackendImpl,
 
-    pub fn beginDrawing(self: *Backend) void {
+    pub fn beginDrawing(self: *Backend, camera: Camera2D) void {
         switch (self.impl) {
-            .opengl => |*gl| gl.beginDrawing(),
+            .opengl => |*gl| gl.beginDrawing(camera.getViewMatrix()),
             .vulkan => unreachable,
         }
     }

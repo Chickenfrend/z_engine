@@ -7,6 +7,7 @@ const Texture = @import ("./Texture.zig").Texture;
 const Backend = @import("./Backend.zig").Backend;
 const DrawCommand = @import("./Backend.zig").DrawCommand;
 const DrawParams = @import("./DrawParams.zig");
+const Camera2D = @import("./Camera.zig").Camera2D;
 
 // Maybe the GraphicsApi enum should not live in the window module.
 const GraphicsApi = @import("../window/Window.zig").GraphicsApi;
@@ -22,12 +23,14 @@ const std = @import("std");
 // When we do this, we might be able to get rid of some of the error returns.
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
+    camera: Camera2D,
     backend: Backend,
     renderQueue: std.ArrayList(DrawCommand),
 
     pub fn init(allocator: std.mem.Allocator, api: GraphicsApi) !Renderer {
         return Renderer {
             .allocator = allocator,
+            .camera = .{},
             .backend = Backend.init(allocator, api),
             .renderQueue = .empty,
         };
@@ -68,7 +71,7 @@ pub const Renderer = struct {
     }
 
     pub fn beginDrawing(self: *Renderer) void {
-        self.backend.beginDrawing();
+        self.backend.beginDrawing(self.camera);
     }
 
     pub fn endDrawing(self: *Renderer) !void {
