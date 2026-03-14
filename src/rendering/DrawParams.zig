@@ -19,8 +19,10 @@ pub const SpriteDrawable = struct {
 //    uv_size: [2]f32,
 };
 
-// This defines the position of the sprite within the texture, starting
-// from top left. Then, it also defines the width and height of the texture.
+// This defines the position of the sprite within the texture with its x and y
+// coordinates, starting from top left. 
+// The width and heigh variables define the width and height of 
+// the portion of the texture is uses.
 pub const SpriteRect = struct {
     x: f32,
     y: f32,

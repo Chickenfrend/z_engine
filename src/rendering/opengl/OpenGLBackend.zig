@@ -3,6 +3,7 @@
 const Shader = @import("../ShaderLib.zig");
 const DrawCommand = @import("../Backend.zig").DrawCommand;
 const QuadGeometry = @import("./QuadGeometry.zig").QuadGeometry;
+const InstanceData = @import("./QuadGeometry.zig").InstanceData;
 const Texture = @import ("../Texture.zig").Texture;
 
 const std = @import("std");
@@ -34,13 +35,14 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
     return @as(*const [16]f32, @ptrCast(&mat)).*;
 }
 
+
 pub const OpenGLBackend = struct {
     shader: Shader,
     texture: Texture,
     view: [4][4]f32,
     projection: [4][4]f32,
     allocator: std.mem.Allocator,
-    matrices: std.ArrayList([16]f32),
+    instanceData: std.ArrayList(InstanceData),
     geometry: QuadGeometry,
 
     // I think this should take a flag, called "instanced" or something, which would let it toggle
@@ -57,7 +59,7 @@ pub const OpenGLBackend = struct {
 
     pub fn render(self: *OpenGLBackend, drawCommands: []const DrawCommand) !void {
         // Reuse memory
-        self.matrices.clearRetainingCapacity();
+        self.instanceData.clearRetainingCapacity();
 
         c.glDisable(c.GL_BLEND);
         for (drawCommands) |command| {
@@ -70,11 +72,13 @@ pub const OpenGLBackend = struct {
             // I'm not sure how efficient this is.
             const modelM = translation_matrix.multiply(scale).transpose();
 
-            // Add to the list of things to be drawn.
-            // Since the renderer (the public version) passes in command lists now, this 
-            // matrices variable that the OpenGLBackend owns might not need to exist anymore.
-            // TODO: Look into this.
-            try self.matrices.append(self.allocator, flattenMat4(modelM.data));
+            // Construct an instance data and append one for each draw command.
+            try self.instanceData.append(self.allocator, .{
+                .model = flattenMat4(modelM.data),
+                .uv_offset = command.uv_offset,
+                .uv_size = command.uv_size,
+
+            });
         }
 
         // Send the instance data
@@ -116,7 +120,7 @@ pub const OpenGLBackend = struct {
             .shader = shaderProgram,
             .projection = projM.data,
             .allocator = allocator,
-            .matrices = .empty,
+            .instanceData = .empty,
             .texture = texture,
             .geometry = geometry,
             .view = view.data,
@@ -137,8 +141,8 @@ pub const OpenGLBackend = struct {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.geometry.instance_VBO);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,
-            @intCast(self.matrices.items.len * @sizeOf([16]f32)),
-            self.matrices.items.ptr,
+            @intCast(self.instanceData.items.len * @sizeOf(self.instanceData)),
+            self.instanceData.items.ptr,
             c.GL_DYNAMIC_DRAW
         );
     }

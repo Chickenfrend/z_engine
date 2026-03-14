@@ -15,6 +15,12 @@ else
         @cInclude("GL/glext.h");
     });
 
+const InstanceData = extern struct {
+    model: [16]f32,
+    uv_offset: [2]f32,
+    uv_size: [2]f32,
+};
+
 pub const QuadGeometry = struct {
     VAO: c_uint,
     VBO: c_uint,
@@ -23,10 +29,10 @@ pub const QuadGeometry = struct {
 
     // Position (x, y, z) + UV (u, v)
     const vertices = [20]f32{
-        1.0, 1.0, 0.0, 0.128, 0.21, // right top (y=1 in screen space = bottom of quad)
-        1.0, 0.0, 0.0, 0.128, 0.1,  // right bottom
-        0.0, 0.0, 0.0, 0.06,  0.1,  // left bottom
-        0.0, 1.0, 0.0, 0.06,  0.21, // left top   
+        1.0, 1.0, 0.0, 1.0, 1.0, // right top (y=1 in screen space = bottom of quad)
+        1.0, 0.0, 0.0, 1.0, 0.0,  // right bottom
+        0.0, 0.0, 0.0, 0.0, 0.0,  // left bottom
+        0.0, 1.0, 0.0, 0.0, 1.0, // left top   
     };
 
     const indices = [6]u32{
@@ -78,6 +84,30 @@ pub const QuadGeometry = struct {
             );
             c.glVertexAttribDivisor(loc, 1);  // This makes it instanced
         }
+
+        // This sets up the uv_offset for sprites.
+        c.glEnableVertexAttribArray(6);
+        c.glVertexAttribPointer(
+            6, 
+            2, 
+            c.GL_FLOAT, 
+            c.GL_FALSE, 
+            @sizeOf(InstanceData), 
+            @ptrFromInt(@offsetOf(InstanceData, "uv_offset"))
+        );
+        c.glVertexAttribDivisor(6, 1);
+
+        // This sets up the uv_size for sprites.
+        c.glEnableVertexAttribArray(7);
+        c.glVertexAttribPointer(
+            7,
+            2, 
+            c.GL_FLOAT, 
+            c.GL_FALSE, 
+            @sizeOf(InstanceData), 
+            @ptrFromInt(@offsetOf(InstanceData, "uv_offset"))
+        );
+        c.glVertexAttribDivisor(7, 1);
 
         c.glBindVertexArray(0);
 
