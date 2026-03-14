@@ -37,6 +37,7 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
 pub const OpenGLBackend = struct {
     shader: Shader,
     texture: Texture,
+    view: [4][4]f32,
     projection: [4][4]f32,
     allocator: std.mem.Allocator,
     matrices: std.ArrayList([16]f32),
@@ -48,8 +49,8 @@ pub const OpenGLBackend = struct {
     // should be organized. Right now (02/26/2026) the VBO/VAO is associated with the geometry,
     // not the render pipeline.
     
-    pub fn beginDrawing(self: *OpenGLBackend) void {
-        _ = self;
+    pub fn beginDrawing(self: *OpenGLBackend, view: [4][4]f32) void {
+        self.view = view; 
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
     }
@@ -85,6 +86,7 @@ pub const OpenGLBackend = struct {
         c.glBindTexture(c.GL_TEXTURE_2D, self.texture.id);
         self.shader.setInt("textureSampler", 0);
         self.shader.setMat4f("projection", flattenMat4(self.projection));
+        self.shader.setMat4f("view", flattenMat4(self.view));
 
         var bound_texture: c.GLint = 0;
         c.glGetIntegerv(c.GL_TEXTURE_BINDING_2D, &bound_texture);
@@ -108,6 +110,8 @@ pub const OpenGLBackend = struct {
 
         const projM = zm.Mat4f.orthographicRH(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
 
+        const view = zm.Mat4f.identity();
+
         return OpenGLBackend{
             .shader = shaderProgram,
             .projection = projM.data,
@@ -115,6 +119,7 @@ pub const OpenGLBackend = struct {
             .matrices = .empty,
             .texture = texture,
             .geometry = geometry,
+            .view = view.data,
         };
     }
 

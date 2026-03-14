@@ -5,9 +5,10 @@ layout (location = 2) in mat4 instanceModel;
 
 out vec2 texCoord;
 uniform mat4 projection;
+uniform mat4 view;
 
 void main()
 {
-    gl_Position = projection * instanceModel * vec4(aPos, 1.0);
+    gl_Position = projection * view * instanceModel * vec4(aPos, 1.0);
     texCoord = aTexCoord;
 }
