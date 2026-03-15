@@ -15,7 +15,7 @@ else
         @cInclude("GL/glext.h");
     });
 
-const InstanceData = extern struct {
+pub const InstanceData = extern struct {
     model: [16]f32,
     uv_offset: [2]f32,
     uv_size: [2]f32,

@@ -38,12 +38,11 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
 
 pub const OpenGLBackend = struct {
     shader: Shader,
-    texture: Texture,
+    textures: std.ArrayList(Texture),
     view: [4][4]f32,
     projection: [4][4]f32,
     allocator: std.mem.Allocator,
     instanceData: std.ArrayList(InstanceData),
-    textures: std.ArrayList(Texture),
     geometry: QuadGeometry,
 
     // I think this should take a flag, called "instanced" or something, which would let it toggle
@@ -64,7 +63,11 @@ pub const OpenGLBackend = struct {
 
         c.glDisable(c.GL_BLEND);
         // Since we're instancing, each command should have the same texture.
-        const texture = drawCommands[0].material.texture;
+        const texture_id = if (drawCommands[0].material.texture) |handle|
+            self.textures.items[handle].id
+        else
+            0;
+
         for (drawCommands) |command| {
             const translation_matrix = zm.Mat4f.translation(command.position[0], command.position[1], 0.0);
             const scale = zm.Mat4f.scaling(command.width, command.height, 1.0);
@@ -87,12 +90,10 @@ pub const OpenGLBackend = struct {
         // Send the instance data
         self.updateInstanceData();
 
-        // Look up the texture.
-
         // Draw
         self.shader.use();
         c.glActiveTexture(c.GL_TEXTURE0);
-        c.glBindTexture(c.GL_TEXTURE_2D, texture.id);
+        c.glBindTexture(c.GL_TEXTURE_2D, texture_id);
         self.shader.setInt("textureSampler", 0);
         self.shader.setMat4f("projection", flattenMat4(self.projection));
         self.shader.setMat4f("view", flattenMat4(self.view));
@@ -151,15 +152,14 @@ pub const OpenGLBackend = struct {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.geometry.instance_VBO);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,
-            @intCast(self.instanceData.items.len * @sizeOf(self.instanceData)),
+            @intCast(self.instanceData.items.len * @sizeOf(InstanceData)),
             self.instanceData.items.ptr,
             c.GL_DYNAMIC_DRAW
         );
     }
 
     pub fn cleanup(self: *OpenGLBackend) void {
-        self.matrices.deinit(self.allocator);
-        self.texture.deinit();
+        self.instanceData.deinit(self.allocator);
         self.geometry.deinit();
         c.glDeleteProgram(self.shader.ID);
     }
