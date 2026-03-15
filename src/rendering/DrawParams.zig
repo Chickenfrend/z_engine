@@ -12,7 +12,7 @@ pub const SpriteParams = struct {
     position: [2]f32,
     width: f32,
     height: f32,
-    color: [4]f32,
+    color: [4]f32 = .{1, 1, 1, 1},
     texture: Texture,
     sprite_rect: SpriteRect,
 };
@@ -32,9 +32,8 @@ pub const SpriteRect = struct {
 // list, as well as the textures width and height in pixels.
 // This might belong somewhere other than DrawParams. 
 // Or maybe DrawParams should be renamed.
-
 pub const Texture = struct {
     id: u32,
-    width: f32,
-    height: f32,
+    width: u32,
+    height: u32,
 };

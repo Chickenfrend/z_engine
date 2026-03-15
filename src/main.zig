@@ -47,7 +47,7 @@ pub fn main() !void {
     
     var pong = PongState.init(@floatFromInt(window.width), @floatFromInt(window.height));
 
-    const background_texture = render_pipeline.loadTexture("../assets/Signed_Pong_Cabinet.jpg");
+    const background_texture = render_pipeline.loadTexture("./assets/Signed_Pong_Cabinet.jpg");
 
 
     var global_state: state.GlobalState = .{
@@ -121,7 +121,20 @@ pub fn main() !void {
         };
         render_pipeline.beginDrawing();
 
-        render_pipeline.drawSprite(
+        const background_width: f32 = @floatFromInt(background_texture.width);
+        const background_height: f32 = @floatFromInt(background_texture.height);
+        try render_pipeline.drawSprite(.{
+            .position = .{300, 100},
+            .width = background_width/4.0,
+            .height = background_height/4.0,
+            .texture = background_texture,
+            .sprite_rect = .{
+                .x = 0.0,
+                .y = 0.0,
+                .width = @floatFromInt(background_texture.width),
+                .height = @floatFromInt(background_texture.height),
+            }
+        });
         for (rects) |rect| {
             try render_pipeline.drawRect(rect);
         }

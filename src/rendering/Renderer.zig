@@ -58,9 +58,12 @@ pub const Renderer = struct {
         try self.renderQueue.append(self.allocator, command);
     }
 
+    // I'm not sure if this should return an error.
+    // Actually, eventually it definitely shouldn't because renderQueue should be a fixed
+    // size.
     pub fn drawSprite(self: *Renderer, params: DrawParams.SpriteParams) !void {
-        const tw = params.texture.width;
-        const th = params.texture.height;
+        const tw: f32 = @floatFromInt(params.texture.width);
+        const th: f32 = @floatFromInt(params.texture.height);
         const command = DrawCommand {
             .position = params.position,
             .width = params.width,
@@ -81,10 +84,21 @@ pub const Renderer = struct {
         self.backend.beginDrawing(self.camera);
     }
 
+    // Very crude texture sorting.
     pub fn endDrawing(self: *Renderer) !void {
-        try self.backend.render(self.renderQueue.items);
+        // Sort by texture handle so null comes first (rects), then group by texture
+        const items = self.renderQueue.items;
+        
+        var i: usize = 0;
+        while (i < items.len) {
+            const current_texture = items[i].material.texture;
+            var j = i + 1;
+            while (j < items.len and items[j].material.texture == current_texture) : (j += 1) {}
+            try self.backend.render(items[i..j]);
+            i = j;
+        }
         self.renderQueue.clearRetainingCapacity();
-    }
+}
 
     pub fn deinit(self: *Renderer) void {
         self.backend.deinit();

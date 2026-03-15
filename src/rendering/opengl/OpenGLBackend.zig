@@ -150,8 +150,8 @@ pub const OpenGLBackend = struct {
         self.textures.append(self.allocator, texture) catch unreachable;
         return Texture {
             .id = @intCast(self.textures.items.len - 1),
-            .width = GPUTexture.width,
-            .height = GPUTexture.height,
+            .width = texture.width,
+            .height = texture.height,
         };
     }
 
