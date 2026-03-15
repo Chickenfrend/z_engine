@@ -79,7 +79,7 @@ pub const QuadGeometry = struct {
                 4, 
                 c.GL_FLOAT, 
                 c.GL_FALSE, 
-                @sizeOf([16]f32),  // stride = size of mat4
+                @sizeOf(InstanceData),  // stride = size of mat4
                 @ptrFromInt(i * @sizeOf([4]f32))  // offset to each column
             );
             c.glVertexAttribDivisor(loc, 1);  // This makes it instanced
@@ -105,7 +105,7 @@ pub const QuadGeometry = struct {
             c.GL_FLOAT, 
             c.GL_FALSE, 
             @sizeOf(InstanceData), 
-            @ptrFromInt(@offsetOf(InstanceData, "uv_offset"))
+            @ptrFromInt(@offsetOf(InstanceData, "uv_size"))
         );
         c.glVertexAttribDivisor(7, 1);
 

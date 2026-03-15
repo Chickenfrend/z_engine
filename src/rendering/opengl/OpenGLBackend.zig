@@ -66,7 +66,7 @@ pub const OpenGLBackend = struct {
         const texture_id = if (drawCommands[0].material.texture) |handle|
             self.textures.items[handle].id
         else
-            0;
+            self.textures.items[0].id;
 
         for (drawCommands) |command| {
             const translation_matrix = zm.Mat4f.translation(command.position[0], command.position[1], 0.0);
@@ -121,12 +121,23 @@ pub const OpenGLBackend = struct {
 
         const view = zm.Mat4f.identity();
 
+        // Create a 1x1 white texture as default
+        var white_texture_id: c.GLuint = undefined;
+        c.glGenTextures(1, &white_texture_id);
+        c.glBindTexture(c.GL_TEXTURE_2D, white_texture_id);
+        const white_pixel = [4]u8{ 255, 255, 255, 255 };
+        c.glTexImage2D(c.GL_TEXTURE_2D, 0, c.GL_RGBA, 1, 1, 0, c.GL_RGBA, c.GL_UNSIGNED_BYTE, &white_pixel);
+        
+        // Push it as the first texture (handle 0)
+        var textures: std.ArrayList(Texture) = .empty;
+        textures.append(allocator, Texture{ .id = white_texture_id, .width = 1, .height = 1 }) catch unreachable;
+
         return OpenGLBackend{
             .shader = shaderProgram,
             .projection = projM.data,
             .allocator = allocator,
             .instanceData = .empty,
-            .textures = .empty,
+            .textures = textures,
             .geometry = geometry,
             .view = view.data,
         };
