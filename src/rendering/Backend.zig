@@ -2,6 +2,7 @@ const std = @import("std");
 const GraphicsApi = @import("../window/Window.zig").GraphicsApi;
 const OpenGLBackend = @import("./opengl/OpenGLBackend.zig").OpenGLBackend;
 const Camera2D = @import("./Camera.zig").Camera2D;
+const Texture = @import("./DrawParams.zig").Texture;
 
 pub const Material = struct {
     texture: ?u32,
@@ -49,7 +50,7 @@ pub const Backend = struct {
         };
     }
 
-    pub fn loadTexture(self: *Backend, path: []const u8) u32 {
+    pub fn loadTexture(self: *Backend, path: []const u8) Texture {
         return switch (self.impl) {
             .opengl => |*gl| gl.loadTexture(path),
             .vulkan => unreachable,

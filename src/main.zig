@@ -47,6 +47,8 @@ pub fn main() !void {
     
     var pong = PongState.init(@floatFromInt(window.width), @floatFromInt(window.height));
 
+    const background_texture = render_pipeline.loadTexture("../assets/Signed_Pong_Cabinet.jpg");
+
 
     var global_state: state.GlobalState = .{
         .clock = std.time.Timer.start() catch |err| {
@@ -118,6 +120,8 @@ pub fn main() !void {
             .{ .position = pong.ball_pos, .width = 15, .height = 15, .color = .{1,1,1,1} },
         };
         render_pipeline.beginDrawing();
+
+        render_pipeline.drawSprite(
         for (rects) |rect| {
             try render_pipeline.drawRect(rect);
         }

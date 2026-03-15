@@ -8,15 +8,13 @@ pub const RectParams = struct {
     color: [4]f32,
 };
 
-pub const SpriteDrawable = struct {
+pub const SpriteParams = struct {
     position: [2]f32,
     width: f32,
     height: f32,
     color: [4]f32,
-    texture: u32,
+    texture: Texture,
     sprite_rect: SpriteRect,
-//    uv_offset: [2]f32,
-//    uv_size: [2]f32,
 };
 
 // This defines the position of the sprite within the texture with its x and y
@@ -27,5 +25,16 @@ pub const SpriteRect = struct {
     x: f32,
     y: f32,
     width: f32,
-    heigh: f32,
+    height: f32,
+};
+
+// This Texture type contains an id which refers to its position in the backend texture
+// list, as well as the textures width and height in pixels.
+// This might belong somewhere other than DrawParams. 
+// Or maybe DrawParams should be renamed.
+
+pub const Texture = struct {
+    id: u32,
+    width: f32,
+    height: f32,
 };

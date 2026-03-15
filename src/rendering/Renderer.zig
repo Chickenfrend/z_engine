@@ -3,7 +3,6 @@
 const Shader = @import("ShaderLib.zig");
 const SquareGeometry = @import("./Square.zig").SquareGeometry;
 const Square = @import("./Square.zig").Square;
-const Texture = @import ("./Texture.zig").Texture;
 const Backend = @import("./Backend.zig").Backend;
 const DrawCommand = @import("./Backend.zig").DrawCommand;
 const DrawParams = @import("./DrawParams.zig");
@@ -36,7 +35,9 @@ pub const Renderer = struct {
         };
     }
 
-    pub fn loadTexture(self: *Renderer, path: []const u8) u32 {
+    // This should maybe return some kind of struct to wrap the u32.
+    // The u32 is all it needs at the moment but it's not very, descriptive.
+    pub fn loadTexture(self: *Renderer, path: []const u8) DrawParams.Texture {
         return self.backend.loadTexture(path);
     }
 
@@ -57,15 +58,17 @@ pub const Renderer = struct {
         try self.renderQueue.append(self.allocator, command);
     }
 
-    pub fn drawSprite(self: *Renderer, params: DrawParams.RectParams) !void {
+    pub fn drawSprite(self: *Renderer, params: DrawParams.SpriteParams) !void {
+        const tw = params.texture.width;
+        const th = params.texture.height;
         const command = DrawCommand {
             .position = params.position,
             .width = params.width,
             .height = params.height,
-            .uv_offset = params.uv_offset,
-            .uv_size = params.uv_size,
+            .uv_offset = .{ params.sprite_rect.x / tw, params.sprite_rect.y / th },
+            .uv_size = . { params.sprite_rect.width / tw, params.sprite_rect.height / th },
             .material = .{
-                .texture = params.texture,
+                .texture = params.texture.id,
                 .color = params.color,
                 .blend = false,
             }

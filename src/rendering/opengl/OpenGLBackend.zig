@@ -4,7 +4,8 @@ const Shader = @import("../ShaderLib.zig");
 const DrawCommand = @import("../Backend.zig").DrawCommand;
 const QuadGeometry = @import("./QuadGeometry.zig").QuadGeometry;
 const InstanceData = @import("./QuadGeometry.zig").InstanceData;
-const Texture = @import ("../Texture.zig").Texture;
+const Texture = @import("../DrawParams.zig").Texture;
+const GPUTexture = @import ("./Texture.zig").Texture;
 
 const std = @import("std");
 const zm = @import("zm");
@@ -38,7 +39,7 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
 
 pub const OpenGLBackend = struct {
     shader: Shader,
-    textures: std.ArrayList(Texture),
+    textures: std.ArrayList(GPUTexture),
     view: [4][4]f32,
     projection: [4][4]f32,
     allocator: std.mem.Allocator,
@@ -75,7 +76,8 @@ pub const OpenGLBackend = struct {
             // You could add rotation and stuff onto this.
             // This has to be transposed here because it isn't tranposed by the setMat4f
             // function like the projection matrix is.
-            // I'm not sure how efficient this is.
+            // I'm not sure how efficient this is. 
+            // It's CPU side math every frame. The matrix is small though.
             const modelM = translation_matrix.multiply(scale).transpose();
 
             // Construct an instance data and append one for each draw command.
@@ -129,8 +131,8 @@ pub const OpenGLBackend = struct {
         c.glTexImage2D(c.GL_TEXTURE_2D, 0, c.GL_RGBA, 1, 1, 0, c.GL_RGBA, c.GL_UNSIGNED_BYTE, &white_pixel);
         
         // Push it as the first texture (handle 0)
-        var textures: std.ArrayList(Texture) = .empty;
-        textures.append(allocator, Texture{ .id = white_texture_id, .width = 1, .height = 1 }) catch unreachable;
+        var textures: std.ArrayList(GPUTexture) = .empty;
+        textures.append(allocator, GPUTexture{ .id = white_texture_id, .width = 1, .height = 1 }) catch unreachable;
 
         return OpenGLBackend{
             .shader = shaderProgram,
@@ -143,10 +145,14 @@ pub const OpenGLBackend = struct {
         };
     }
 
-    pub fn loadTexture(self: *OpenGLBackend, path: []const u8) u32 {
-        const texture = Texture.initFromFile(self.allocator, path);
+    pub fn loadTexture(self: *OpenGLBackend, path: []const u8) Texture {
+        const texture = GPUTexture.initFromFile(self.allocator, path);
         self.textures.append(self.allocator, texture) catch unreachable;
-        return @intCast(self.textures.items.len - 1);
+        return Texture {
+            .id = @intCast(self.textures.items.len - 1),
+            .width = GPUTexture.width,
+            .height = GPUTexture.height,
+        };
     }
 
     pub fn draw(self: *OpenGLBackend) void {
