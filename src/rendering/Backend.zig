@@ -49,6 +49,13 @@ pub const Backend = struct {
         };
     }
 
+    pub fn loadTexture(self: *Backend, path: []const u8) u32 {
+        return switch (self.impl) {
+            .opengl => |*gl| gl.loadTexture(path),
+            .vulkan => unreachable,
+        };
+    }
+
     // Maybe this should be called beingDrawing, to match endDrawing?
     pub fn render(self: *Backend, commands: []DrawCommand) !void {
         switch (self.impl) {

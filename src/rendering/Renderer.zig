@@ -36,6 +36,10 @@ pub const Renderer = struct {
         };
     }
 
+    pub fn loadTexture(self: *Renderer, path: []const u8) u32 {
+        return self.backend.loadTexture(path);
+    }
+
     pub fn drawRect(self: *Renderer, params: DrawParams.RectParams) !void {
         const command = DrawCommand {
             .position = params.position,
