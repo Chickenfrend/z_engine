@@ -42,7 +42,7 @@ pub fn main() !void {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var render_pipeline = try Renderer.init(arena_allocator, .opengl);
+    var render_pipeline = try Renderer.init(arena_allocator, .opengl, window.width, window.height);
     defer render_pipeline.deinit();
     
     var pong = PongState.init(@floatFromInt(window.width), @floatFromInt(window.height));

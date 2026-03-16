@@ -27,11 +27,6 @@ else
         @cInclude("GL/glext.h");
     });
 
-pub const WindowSize = struct {
-    pub const width: u32 = 800;
-    pub const height: u32 = 600;
-};
-
 fn flattenMat4(mat: [4][4]f32) [16]f32 {
     return @as(*const [16]f32, @ptrCast(&mat)).*;
 }
@@ -64,6 +59,8 @@ pub const OpenGLBackend = struct {
     pub fn render(self: *OpenGLBackend, drawCommands: []const DrawCommand) !void {
         // Reuse memory
         self.instanceData.clearRetainingCapacity();
+
+        if (drawCommands.len == 0) return;
 
         c.glDisable(c.GL_BLEND);
         // Since we're instancing, each command should have the same texture.
@@ -103,17 +100,11 @@ pub const OpenGLBackend = struct {
         self.shader.setMat4f("projection", flattenMat4(self.projection));
         self.shader.setMat4f("view", flattenMat4(self.view));
 
-        var bound_texture: c.GLint = 0;
-        c.glGetIntegerv(c.GL_TEXTURE_BINDING_2D, &bound_texture);
-        var bound_program: c.GLint = 0;
-        c.glGetIntegerv(c.GL_CURRENT_PROGRAM, &bound_program);
-        var blend_enabled: c.GLboolean = 0;
-        c.glGetBooleanv(c.GL_BLEND, &blend_enabled);
         // Draw em all. We're sending the instance count here.
         self.drawInstanced(@intCast(drawCommands.len));
     }
 
-    pub fn init(allocator: std.mem.Allocator) OpenGLBackend {
+    pub fn init(allocator: std.mem.Allocator, window_width: u32, window_height: u32) OpenGLBackend {
         const shaderProgram: Shader = Shader.create(
             allocator,
             "src/rendering/shaders/position_shader.vs",
@@ -122,7 +113,14 @@ pub const OpenGLBackend = struct {
 
         const geometry = QuadGeometry.init();
 
-        const projM = zm.Mat4f.orthographicRH(0, WindowSize.width, WindowSize.height, 0, -1.0, 1.0);
+        const projM = zm.Mat4f.orthographicRH(
+            0, 
+            @floatFromInt(window_width), 
+            @floatFromInt(window_height),
+            0,
+            -1.0,
+            1.0
+        );
 
         const view = zm.Mat4f.identity();
 
@@ -163,11 +161,6 @@ pub const OpenGLBackend = struct {
         };
     }
 
-    pub fn draw(self: *OpenGLBackend) void {
-        c.glBindVertexArray(self.geometry.VAO);
-        c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
-    }
-
     pub fn drawInstanced(self: *OpenGLBackend, instance_count: c_int) void {
         c.glBindVertexArray(self.geometry.VAO);
         c.glDrawElementsInstanced(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null, instance_count);
@@ -187,10 +180,11 @@ pub const OpenGLBackend = struct {
         self.instanceData.deinit(self.allocator);
         self.geometry.deinit();
         c.glDeleteProgram(self.shader.ID);
+        
+        var ids_to_delete: [MAX_TEXTURES]c.GLuint = undefined;
+        for (self.textures[0..self.texture_count], 0..) |texture, i| {
+            ids_to_delete[i] = texture.id;
+        }
+        c.glDeleteTextures(@intCast(self.texture_count), &ids_to_delete[0]);
     }
 };
-
-fn calculateGreenValue(time: f64) f32 {
-    const timeCasted: f32 = @floatCast(time);
-    return @sin(timeCasted) / 2.0 + 0.5;
-}

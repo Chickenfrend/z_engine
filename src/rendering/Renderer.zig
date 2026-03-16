@@ -26,11 +26,13 @@ pub const Renderer = struct {
     backend: Backend,
     renderQueue: std.ArrayList(DrawCommand),
 
-    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi) !Renderer {
+    // We're passing the window width and height but we need to thread through a resize
+    // callback from the window module to the backend.
+    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi, window_width: u32, window_height: u32) !Renderer {
         return Renderer {
             .allocator = allocator,
             .camera = .{},
-            .backend = Backend.init(allocator, api),
+            .backend = Backend.init(allocator, api, window_width, window_height),
             .renderQueue = .empty,
         };
     }

@@ -41,10 +41,10 @@ pub const Backend = struct {
         }
     }
 
-    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi) Backend {
+    pub fn init(allocator: std.mem.Allocator, api: GraphicsApi, window_width: u32, window_height: u32) Backend {
         return switch (api) {
             .opengl => Backend{
-                .impl = .{ .opengl = OpenGLBackend.init(allocator) },
+                .impl = .{ .opengl = OpenGLBackend.init(allocator, window_width, window_height) },
             },
             .vulkan => @panic("Vulkan not yet support"),
         };
