@@ -3,7 +3,6 @@
 const Shader = @import("ShaderLib.zig");
 const SquareGeometry = @import("./Square.zig").SquareGeometry;
 const Square = @import("./Square.zig").Square;
-const Texture = @import ("./Texture.zig").Texture;
 const Backend = @import("./Backend.zig").Backend;
 const DrawCommand = @import("./Backend.zig").DrawCommand;
 const DrawParams = @import("./DrawParams.zig");
@@ -36,6 +35,10 @@ pub const Renderer = struct {
         };
     }
 
+    pub fn loadTexture(self: *Renderer, path: []const u8) !DrawParams.Texture {
+        return self.backend.loadTexture(path);
+    }
+
     pub fn drawRect(self: *Renderer, params: DrawParams.RectParams) !void {
         const command = DrawCommand {
             .position = params.position,
@@ -53,15 +56,20 @@ pub const Renderer = struct {
         try self.renderQueue.append(self.allocator, command);
     }
 
-    pub fn drawSprite(self: *Renderer, params: DrawParams.RectParams) !void {
+    // I'm not sure if this should return an error.
+    // Actually, eventually it definitely shouldn't because renderQueue should be a fixed
+    // size.
+    pub fn drawSprite(self: *Renderer, params: DrawParams.SpriteParams) !void {
+        const tw: f32 = @floatFromInt(params.texture.width);
+        const th: f32 = @floatFromInt(params.texture.height);
         const command = DrawCommand {
             .position = params.position,
             .width = params.width,
             .height = params.height,
-            .uv_offset = params.uv_offset,
-            .uv_size = params.uv_size,
+            .uv_offset = .{ params.sprite_rect.x / tw, params.sprite_rect.y / th },
+            .uv_size = . { params.sprite_rect.width / tw, params.sprite_rect.height / th },
             .material = .{
-                .texture = params.texture,
+                .texture = params.texture.id,
                 .color = params.color,
                 .blend = false,
             }
@@ -74,10 +82,21 @@ pub const Renderer = struct {
         self.backend.beginDrawing(self.camera);
     }
 
+    // Very crude texture sorting.
     pub fn endDrawing(self: *Renderer) !void {
-        try self.backend.render(self.renderQueue.items);
+        // Sort by texture handle so null comes first (rects), then group by texture
+        const items = self.renderQueue.items;
+        
+        var i: usize = 0;
+        while (i < items.len) {
+            const current_texture = items[i].material.texture;
+            var j = i + 1;
+            while (j < items.len and items[j].material.texture == current_texture) : (j += 1) {}
+            try self.backend.render(items[i..j]);
+            i = j;
+        }
         self.renderQueue.clearRetainingCapacity();
-    }
+}
 
     pub fn deinit(self: *Renderer) void {
         self.backend.deinit();
