@@ -36,15 +36,18 @@ fn flattenMat4(mat: [4][4]f32) [16]f32 {
     return @as(*const [16]f32, @ptrCast(&mat)).*;
 }
 
+const MAX_TEXTURES: u32 = 1024;
+
 
 pub const OpenGLBackend = struct {
     shader: Shader,
-    textures: std.ArrayList(GPUTexture),
+    textures: [MAX_TEXTURES]GPUTexture,
     view: [4][4]f32,
     projection: [4][4]f32,
     allocator: std.mem.Allocator,
     instanceData: std.ArrayList(InstanceData),
     geometry: QuadGeometry,
+    texture_count: u32,
 
     // I think this should take a flag, called "instanced" or something, which would let it toggle
     // between rendering instanced and uniform/non-instanced.
@@ -65,9 +68,9 @@ pub const OpenGLBackend = struct {
         c.glDisable(c.GL_BLEND);
         // Since we're instancing, each command should have the same texture.
         const texture_id = if (drawCommands[0].material.texture) |handle|
-            self.textures.items[handle].id
+            self.textures[handle].id
         else
-            self.textures.items[0].id;
+            self.textures[0].id;
 
         for (drawCommands) |command| {
             const translation_matrix = zm.Mat4f.translation(command.position[0], command.position[1], 0.0);
@@ -131,8 +134,9 @@ pub const OpenGLBackend = struct {
         c.glTexImage2D(c.GL_TEXTURE_2D, 0, c.GL_RGBA, 1, 1, 0, c.GL_RGBA, c.GL_UNSIGNED_BYTE, &white_pixel);
         
         // Push it as the first texture (handle 0)
-        var textures: std.ArrayList(GPUTexture) = .empty;
-        textures.append(allocator, GPUTexture{ .id = white_texture_id, .width = 1, .height = 1 }) catch unreachable;
+        var textures: [MAX_TEXTURES]GPUTexture = std.mem.zeroes([MAX_TEXTURES]GPUTexture);
+        textures[0] = GPUTexture{ .id = white_texture_id, .width = 1, .height = 1 };
+        const texture_count = 1;
 
         return OpenGLBackend{
             .shader = shaderProgram,
@@ -142,14 +146,18 @@ pub const OpenGLBackend = struct {
             .textures = textures,
             .geometry = geometry,
             .view = view.data,
+            .texture_count = texture_count,
         };
     }
 
-    pub fn loadTexture(self: *OpenGLBackend, path: []const u8) Texture {
+    pub fn loadTexture(self: *OpenGLBackend, path: []const u8) !Texture {
+        if (self.texture_count >= MAX_TEXTURES) return error.TooManyTextures;
         const texture = GPUTexture.initFromFile(self.allocator, path);
-        self.textures.append(self.allocator, texture) catch unreachable;
+        self.textures[self.texture_count] = texture;
+        const texture_id = self.texture_count;
+        self.texture_count += 1;
         return Texture {
-            .id = @intCast(self.textures.items.len - 1),
+            .id = texture_id,
             .width = texture.width,
             .height = texture.height,
         };

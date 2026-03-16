@@ -50,7 +50,7 @@ pub const Backend = struct {
         };
     }
 
-    pub fn loadTexture(self: *Backend, path: []const u8) Texture {
+    pub fn loadTexture(self: *Backend, path: []const u8) !Texture {
         return switch (self.impl) {
             .opengl => |*gl| gl.loadTexture(path),
             .vulkan => unreachable,

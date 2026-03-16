@@ -47,7 +47,7 @@ pub fn main() !void {
     
     var pong = PongState.init(@floatFromInt(window.width), @floatFromInt(window.height));
 
-    const background_texture = render_pipeline.loadTexture("./assets/Signed_Pong_Cabinet.jpg");
+    const background_texture = try render_pipeline.loadTexture("./assets/Signed_Pong_Cabinet.jpg");
 
 
     var global_state: state.GlobalState = .{

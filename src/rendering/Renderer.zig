@@ -35,9 +35,7 @@ pub const Renderer = struct {
         };
     }
 
-    // This should maybe return some kind of struct to wrap the u32.
-    // The u32 is all it needs at the moment but it's not very, descriptive.
-    pub fn loadTexture(self: *Renderer, path: []const u8) DrawParams.Texture {
+    pub fn loadTexture(self: *Renderer, path: []const u8) !DrawParams.Texture {
         return self.backend.loadTexture(path);
     }
 
