@@ -85,7 +85,7 @@ pub const OpenGLBackend = struct {
                 .model = flattenMat4(modelM.data),
                 .uv_offset = command.uv_offset,
                 .uv_size = command.uv_size,
-
+                .color = command.material.color,
             });
         }
 
