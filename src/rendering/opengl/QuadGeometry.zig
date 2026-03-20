@@ -19,6 +19,7 @@ pub const InstanceData = extern struct {
     model: [16]f32,
     uv_offset: [2]f32,
     uv_size: [2]f32,
+    color: [4]f32,
 };
 
 pub const QuadGeometry = struct {
@@ -101,13 +102,25 @@ pub const QuadGeometry = struct {
         c.glEnableVertexAttribArray(7);
         c.glVertexAttribPointer(
             7,
-            2, 
-            c.GL_FLOAT, 
-            c.GL_FALSE, 
-            @sizeOf(InstanceData), 
+            2,
+            c.GL_FLOAT,
+            c.GL_FALSE,
+            @sizeOf(InstanceData),
             @ptrFromInt(@offsetOf(InstanceData, "uv_size"))
         );
         c.glVertexAttribDivisor(7, 1);
+
+        // This sets up the color.
+        c.glEnableVertexAttribArray(8);
+        c.glVertexAttribPointer(
+            8,
+            4,
+            c.GL_FLOAT,
+            c.GL_FALSE,
+            @sizeOf(InstanceData),
+            @ptrFromInt(@offsetOf(InstanceData, "color"))
+        );
+        c.glVertexAttribDivisor(8, 1);
 
         c.glBindVertexArray(0);
 
