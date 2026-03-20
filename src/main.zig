@@ -143,7 +143,7 @@ pub fn main() !void {
             //Pong Score
             fr.renderText(
                 try std.fmt.allocPrint(arena_allocator, "{d} - {d}", .{ pong.left_score, pong.right_score }),
-                @as(f32, Renderer.WindowSize.width) / 2 - 50,
+                @as(f32, @floatFromInt(window.width)) / 2 - 50,
                 50.0,
                 1.0,
                 .{ 1.0, 1.0, 1.0 },
