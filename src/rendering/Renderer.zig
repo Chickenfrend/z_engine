@@ -107,4 +107,19 @@ pub const Renderer = struct {
 
 };
 
+const QueueEntry = struct {
+    sort_key: u64
+}
+
 // Render queue here.
+const RENDER_QUEUE_SIZE = 2048;
+pub const RenderQueue = struct {
+    allocator: std.mem.Allocator,
+    items: []DrawCommand,
+    len: usize = 0,
+    sorted: bool = true,
+
+    pub fn init() !RenderQueue {
+        
+    }
+};
