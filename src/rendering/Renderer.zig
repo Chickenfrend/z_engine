@@ -107,9 +107,13 @@ pub const Renderer = struct {
 
 };
 
+// Later the sort key should maybe be a struct, including the texture
+// and the blend. So, we'd construct a key based on that struct.
 const QueueEntry = struct {
-    sort_key: u64
-}
+    sort_key: u64,
+    index: u32,
+    command: DrawCommand,
+};
 
 // Render queue here.
 const RENDER_QUEUE_SIZE = 2048;
@@ -121,5 +125,11 @@ pub const RenderQueue = struct {
 
     pub fn init() !RenderQueue {
         
+    }
+
+    // This only includes texture information right now.
+    // And submission order.
+    // Inspired by this: https://realtimecollisiondetection.net/blog/?p=86
+    fn makeSortKey(command: DrawCommand, submission_index: u32) u64 {
     }
 };
