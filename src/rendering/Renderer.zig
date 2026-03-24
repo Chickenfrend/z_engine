@@ -164,6 +164,19 @@ pub const RenderQueue = struct {
         self.submission_index += 1;
     }
 
+    pub fn sort(self: *RenderQueue) void {
+        if (self.sorted)
+            return;
+
+        std.sort.pdq(QueueEntry, self.items[0..self.len], {}, struct {
+            fn lessThan(_: void, a: QueueEntry, b: QueueEntry) bool {
+                return a.sort_key < b.sort_key;
+            }
+        }.lessThan);
+        self.sorted = true;
+
+    }
+
     pub fn clear(self: *RenderQueue) void {
         self.len = 0;
         self.sorted = true;
