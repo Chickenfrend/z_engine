@@ -111,7 +111,6 @@ pub const Renderer = struct {
 // and the blend. So, we'd construct a key based on that struct.
 const QueueEntry = struct {
     sort_key: u64,
-    index: u32,
     command: DrawCommand,
 };
 
@@ -119,9 +118,10 @@ const QueueEntry = struct {
 const RENDER_QUEUE_SIZE = 2048;
 pub const RenderQueue = struct {
     allocator: std.mem.Allocator,
-    items: []DrawCommand,
+    items: [RENDER_QUEUE_SIZE]QueueEntry,
     len: usize = 0,
     sorted: bool = true,
+    submission_index: u32 = 0,
 
     pub fn init() !RenderQueue {
         
@@ -130,6 +130,48 @@ pub const RenderQueue = struct {
     // This only includes texture information right now.
     // And submission order.
     // Inspired by this: https://realtimecollisiondetection.net/blog/?p=86
+    // Note that once we have this, we can sort with normal integer comparison
+    // The fields we care most about should go on the left.
+    // This should include blending information too. 
+    // And maybe z layer for transparency.
     fn makeSortKey(command: DrawCommand, submission_index: u32) u64 {
+        // Note that this could really be a u16. And we could even smash it into
+        // 10 bits in the key.
+        // Also, the + 1 to tex here is to make room for null.
+        const texture_key: u32 = if(command.material.texture) |tex| tex + 1 else 0;
+        // This bitshift means that textures come before submission keys.
+        // Blending could later come before textures, so that transparent stuff
+        // gets rendered last?
+        return (@as(u64, texture_key) << 32) | submission_index;
+    }
+
+    pub fn push(self: *RenderQueue, command: DrawCommand) !void {
+
+        if (self.len >= RENDER_QUEUE_SIZE) {
+            return error.QueueFull;
+        }
+
+        const entry = QueueEntry {
+            .sort_key = makeSortKey(command, self.submission_index),
+            .command = command,
+        };
+        self.items[self.len] = entry;
+
+        if (self.len > 0 and entry.sort_key < self.items[self.len-1].sort_key) {
+            self.sorted = false;
+        }
+        self.len += 1;
+        self.submission_index += 1;
+    }
+
+    pub fn clear(self: *RenderQueue) void {
+        self.len = 0;
+        self.sorted = true;
+    }
+
+    pub fn reset(self: *RenderQueue) void {
+        self.len = 0;
+        self.submission_index = 0;
+        self.sorted = true;
     }
 };

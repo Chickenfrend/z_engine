@@ -148,6 +148,8 @@ pub const OpenGLBackend = struct {
         };
     }
 
+    // Note that the texture id can't be bigger than max_textures. So, we can compact it
+    // into a small space in the 64 bit render key.
     pub fn loadTexture(self: *OpenGLBackend, path: []const u8) !Texture {
         if (self.texture_count >= MAX_TEXTURES) return error.TooManyTextures;
         const texture = GPUTexture.initFromFile(self.allocator, path);
