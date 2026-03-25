@@ -38,10 +38,15 @@ pub const RenderQueue = struct {
         // 10 bits in the key.
         // Also, the + 1 to tex here is to make room for null.
         const texture_key: u32 = if (command.material.texture) |tex| tex + 1 else 0;
+        const layer_key: u16 = command.layer;
         // This bitshift means that textures come before submission keys.
         // Blending could later come before textures, so that transparent stuff
         // gets rendered last?
-        return (@as(u64, texture_key) << 32) | submission_index;
+        // The layer probably doesn't need a whole 16 bits.
+        return ( 
+            @as(u64, layer_key) << 48
+            | @as(u64, texture_key) << 32
+            | submission_index);
     }
 
     pub fn push(self: *RenderQueue, command: DrawCommand) !void {
