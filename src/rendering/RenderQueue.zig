@@ -3,13 +3,13 @@ const DrawCommand = @import("./Backend.zig").DrawCommand;
 
 // Later the sort key should maybe be a struct, including the texture
 // and the blend. So, we'd construct a key based on that struct.
-const QueueEntry = struct {
+pub const QueueEntry = struct {
     sort_key: u64,
     command: DrawCommand,
 };
 
 // Render queue here.
-const RENDER_QUEUE_SIZE = 2048;
+pub const RENDER_QUEUE_SIZE = 2048;
 // This mask is for sorting the batch.
 // Right now 32 bits are 0s.
 // This should be changed when the key changes.
@@ -86,11 +86,24 @@ pub const RenderQueue = struct {
         return self.len;
     }
 
+    pub fn isFull(self: *const RenderQueue) bool {
+        return self.len == RENDER_QUEUE_SIZE;
+    }
+
+    pub fn isEmpty(self: *const RenderQueue) bool {
+        return self.len == 0;
+    }
+
+    // This can happen in the middle of frames so preserving submission_index
+    // actually matters. That shouldn't happen often... But it could.
     pub fn clear(self: *RenderQueue) void {
         self.len = 0;
         self.sorted = true;
     }
 
+    // This should really only be called at the beginning of each frame,
+    // probably. Resets the submission_index so when we eventually support transparency,
+    // it'll matter that that only happens when we're done drawing.
     pub fn reset(self: *RenderQueue) void {
         self.len = 0;
         self.submission_index = 0;

@@ -7,6 +7,9 @@ const Backend = @import("./Backend.zig").Backend;
 const DrawCommand = @import("./Backend.zig").DrawCommand;
 const DrawParams = @import("./DrawParams.zig");
 const Camera2D = @import("./Camera.zig").Camera2D;
+const RenderQueueModule = @import("./RenderQueue.zig");
+const RenderQueue = RenderQueueModule.RenderQueue;
+const RENDER_QUEUE_SIZE = RenderQueueModule.RENDER_QUEUE_SIZE;
 
 // Maybe the GraphicsApi enum should not live in the window module.
 const GraphicsApi = @import("../window/Window.zig").GraphicsApi;
@@ -24,7 +27,8 @@ pub const Renderer = struct {
     allocator: std.mem.Allocator,
     camera: Camera2D,
     backend: Backend,
-    renderQueue: std.ArrayList(DrawCommand),
+    renderQueue: RenderQueue,
+    batch_commands: [RENDER_QUEUE_SIZE]DrawCommand = undefined,
 
     // We're passing the window width and height but we need to thread through a resize
     // callback from the window module to the backend.
@@ -33,8 +37,13 @@ pub const Renderer = struct {
             .allocator = allocator,
             .camera = .{},
             .backend = Backend.init(allocator, api, window_width, window_height),
-            .renderQueue = .empty,
+            .renderQueue = RenderQueue.init(),
         };
+    }
+
+    pub fn beginDrawing(self: *Renderer) void {
+        self.renderQueue.reset();
+        self.backend.beginDrawing(self.camera);
     }
 
     pub fn loadTexture(self: *Renderer, path: []const u8) !DrawParams.Texture {
@@ -55,7 +64,7 @@ pub const Renderer = struct {
             }
         };
 
-        try self.renderQueue.append(self.allocator, command);
+        try self.pushToQueue(command);
     }
 
     // I'm not sure if this should return an error.
@@ -77,32 +86,47 @@ pub const Renderer = struct {
             }
         };
 
-        try self.renderQueue.append(self.allocator, command);
+        try self.pushToQueue(command);
     }
 
-    pub fn beginDrawing(self: *Renderer) void {
-        self.backend.beginDrawing(self.camera);
+    fn pushToQueue(self: *Renderer, command: DrawCommand) !void {
+        if (self.renderQueue.isFull()) {
+            try self.flushQueue();
+        }
+
+        try self.renderQueue.push(command);
+    }
+
+    fn flushQueue(self: *Renderer) !void {
+        if (self.renderQueue.isEmpty()) {
+            return;
+        }
+
+        self.renderQueue.sort();
+        const items = self.renderQueue.items[0..self.renderQueue.len];
+        var start_index: usize = 0;
+
+        while (start_index < items.len) {
+            const end_index = self.renderQueue.nextBatchEnd(start_index);
+
+            for (items[start_index..end_index], 0..) |entry, i| {
+                self.batch_commands[i] = entry.command;
+            }
+
+            try self.backend.render(self.batch_commands[0 .. end_index - start_index]);
+            start_index = end_index;
+        }
+
+        self.renderQueue.clear();
     }
 
     // Very crude texture sorting.
     pub fn endDrawing(self: *Renderer) !void {
-        // Sort by texture handle so null comes first (rects), then group by texture
-        const items = self.renderQueue.items;
-        
-        var i: usize = 0;
-        while (i < items.len) {
-            const current_texture = items[i].material.texture;
-            var j = i + 1;
-            while (j < items.len and items[j].material.texture == current_texture) : (j += 1) {}
-            try self.backend.render(items[i..j]);
-            i = j;
-        }
-        self.renderQueue.clearRetainingCapacity();
-}
+        try self.flushQueue();
+    }
 
     pub fn deinit(self: *Renderer) void {
         self.backend.deinit();
-        self.renderQueue.deinit(self.allocator);
     }
 
 };
