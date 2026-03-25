@@ -22,6 +22,7 @@ pub const DrawCommand = struct {
     uv_offset: [2]f32,
     uv_size: [2]f32,
     material: Material,
+    layer: u16,
 };
 
 const BackendImpl = union(enum) {

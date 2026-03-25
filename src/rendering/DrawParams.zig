@@ -6,6 +6,7 @@ pub const RectParams = struct {
     width: f32,
     height: f32,
     color: [4]f32,
+    layer: u16 = 0,
 };
 
 pub const SpriteParams = struct {
@@ -15,6 +16,7 @@ pub const SpriteParams = struct {
     color: [4]f32 = .{1, 1, 1, 1},
     texture: Texture,
     sprite_rect: SpriteRect,
+    layer: u16 = 0,
 };
 
 // This defines the position of the sprite within the texture with its x and y

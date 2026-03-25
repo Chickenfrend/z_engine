@@ -114,9 +114,24 @@ pub fn main() !void {
         pong.update(dt);
 
         const rects = [_]RectParams{
-            .{ .position = .{ 20, pong.paddle_left_y }, .width = 20, .height = 100, .color = .{ 0, 0.5, 1, 1 } },
-            .{ .position = .{ 760, pong.paddle_right_y }, .width = 20, .height = 100, .color = .{ 1, 0.2, 0.2, 1 } },
-            .{ .position = pong.ball_pos, .width = 15, .height = 15, .color = .{ 1, 1, 0, 1 } },
+            .{ 
+                .position = .{ 20, pong.paddle_left_y }, 
+                .width = 20,
+                .height = 100,
+                .color = .{ 0, 0.5, 1, 1 } 
+            },
+            .{ 
+                .position = .{ 760, pong.paddle_right_y },
+                .width = 20,
+                .height = 100,
+                .color = .{ 1, 0.2, 0.2, 1 } 
+            },
+            .{ 
+                .position = pong.ball_pos,
+                .width = 15,
+                .height = 15,
+                .color = .{ 1, 1, 0, 1 } 
+            },
         };
         render_pipeline.beginDrawing();
 
