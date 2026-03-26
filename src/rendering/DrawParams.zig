@@ -7,6 +7,7 @@ pub const RectParams = struct {
     height: f32,
     color: [4]f32,
     layer: u16 = 0,
+    order: u16 = 0,
 };
 
 pub const SpriteParams = struct {
@@ -16,6 +17,7 @@ pub const SpriteParams = struct {
     color: [4]f32 = .{1, 1, 1, 1},
     texture: Texture,
     layer: u16 = 0,
+    order: u16 = 0,
     sprite_rect: SpriteRect,
 };
 

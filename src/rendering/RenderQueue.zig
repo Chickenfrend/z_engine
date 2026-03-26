@@ -13,7 +13,7 @@ pub const RENDER_QUEUE_SIZE = 2048;
 // This mask is for sorting the batch.
 // Right now 32 bits are 0s.
 // This should be changed when the key changes.
-const BATCH_MASK: u64 = 0xFFFFFFFF00000000;
+const BATCH_MASK: u64 = 0xFFFFFFFFFFFF0000;
 pub const RenderQueue = struct {
     items: [RENDER_QUEUE_SIZE]QueueEntry,
     len: usize = 0,
@@ -38,15 +38,19 @@ pub const RenderQueue = struct {
         // 10 bits in the key.
         // Also, the + 1 to tex here is to make room for null.
         const texture_key: u32 = if (command.material.texture) |tex| tex + 1 else 0;
+
+        // Make sure the submission index and texture_key match the requirements.
+        // This requirement should be documented somewhere.
+        std.debug.assert(submission_index <= std.math.maxInt(u16));
+        std.debug.assert(texture_key <= std.math.maxInt(u16));
+
+        const packed_submission: u16 = @intCast(submission_index);
         const layer_key: u16 = command.layer;
         // This bitshift means that textures come before submission keys.
         // Blending could later come before textures, so that transparent stuff
         // gets rendered last?
         // The layer probably doesn't need a whole 16 bits.
-        return ( 
-            @as(u64, layer_key) << 48
-            | @as(u64, texture_key) << 32
-            | submission_index);
+        return (@as(u64, layer_key) << 48) | (@as(u64, command.order) << 32) | (@as(u64, texture_key) << 16) | packed_submission;
     }
 
     pub fn push(self: *RenderQueue, command: DrawCommand) !void {
