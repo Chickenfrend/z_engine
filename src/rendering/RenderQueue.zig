@@ -1,8 +1,6 @@
 const std = @import("std");
 const DrawCommand = @import("./Backend.zig").DrawCommand;
 
-// Later the sort key should maybe be a struct, including the texture
-// and the blend. So, we'd construct a key based on that struct.
 pub const QueueEntry = struct {
     sort_key: u64,
     command: DrawCommand,
@@ -10,8 +8,8 @@ pub const QueueEntry = struct {
 
 // Render queue here.
 pub const RENDER_QUEUE_SIZE = 2048;
+
 // This mask is for sorting the batch.
-// Right now 32 bits are 0s.
 // This should be changed when the key changes.
 const BATCH_MASK: u64 = 0xFFFFFFFFFFFF0000;
 pub const RenderQueue = struct {
