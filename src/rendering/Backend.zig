@@ -4,10 +4,19 @@ const OpenGLBackend = @import("./opengl/OpenGLBackend.zig").OpenGLBackend;
 const Camera2D = @import("./Camera.zig").Camera2D;
 const Texture = @import("./DrawParams.zig").Texture;
 
+
+// This is necessary because it effects batching.
+// Masked stuff is like, pngs with transparancy. 
+// Which we definitely want to support.
+// Alpha blended stuff is like, translucent stuff.
+// Blended stuff can't be batched simply. Solid and masked can.
+// Masked stuff is technically blended, too.
+pub const RenderClass = enum { solid, masked, alpha_blended };
+
 pub const Material = struct {
     texture: ?u32,
     color: [4]f32,
-    blend: bool,
+    render_class: RenderClass,
 };
 
 // I went ahead and added a material. I may add a mesh later.

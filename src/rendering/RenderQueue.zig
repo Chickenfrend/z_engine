@@ -46,11 +46,21 @@ pub const RenderQueue = struct {
 
         const packed_submission: u16 = @intCast(submission_index);
         const layer_key: u16 = command.layer;
+
+        // We don't sort alpha blended stuff by texture.
+        const packed_texture_key: u16 = switch (command.material.render_class) {
+            .solid, .masked => @intCast(texture_key),
+            .alpha_blended => 0,
+        };
+
         // This bitshift means that textures come before submission keys.
         // Blending could later come before textures, so that transparent stuff
         // gets rendered last?
         // The layer probably doesn't need a whole 16 bits.
-        return (@as(u64, layer_key) << 48) | (@as(u64, command.order) << 32) | (@as(u64, texture_key) << 16) | packed_submission;
+        return (@as(u64, layer_key) << 48)
+        | (@as(u64, command.order) << 32)
+        | (@as(u64, packed_texture_key) << 16)
+        | packed_submission;
     }
 
     pub fn push(self: *RenderQueue, command: DrawCommand) !void {
@@ -83,7 +93,13 @@ pub const RenderQueue = struct {
         self.sorted = true;
     }
 
+    // This should be optimized later. Right now the approach is that 
+    // transparent stuff is never batched.
     pub fn nextBatchEnd(self: *const RenderQueue, startIndex: usize) usize {
+        if (self.items[startIndex].command.material.render_class == .alpha_blended ) {
+            return startIndex + 1;
+        }
+
         std.debug.assert(startIndex < self.len);
         const start_key = self.items[startIndex].sort_key & BATCH_MASK;
 

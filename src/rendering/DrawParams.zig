@@ -1,3 +1,5 @@
+const RenderClass = @import("Backend.zig").RenderClass;
+
 // This is the data that the Render Pipeline needs in order to draw.
 // uv_offset and uv_size are needed for textures.
 
@@ -8,6 +10,7 @@ pub const RectParams = struct {
     color: [4]f32,
     layer: u16 = 0,
     order: u16 = 0,
+    render_class: RenderClass = .solid,
 };
 
 pub const SpriteParams = struct {
@@ -19,6 +22,7 @@ pub const SpriteParams = struct {
     layer: u16 = 0,
     order: u16 = 0,
     sprite_rect: SpriteRect,
+    render_class: RenderClass = .masked,
 };
 
 // This defines the position of the sprite within the texture with its x and y

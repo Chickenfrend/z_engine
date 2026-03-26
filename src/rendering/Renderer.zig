@@ -62,7 +62,7 @@ pub const Renderer = struct {
             .material = .{
                 .texture = null,
                 .color = params.color,
-                .blend = false,
+                .render_class = params.render_class, 
             }
         };
 
@@ -86,7 +86,7 @@ pub const Renderer = struct {
             .material = .{
                 .texture = params.texture.id,
                 .color = params.color,
-                .blend = false,
+                .render_class = params.render_class,
             }
         };
 
