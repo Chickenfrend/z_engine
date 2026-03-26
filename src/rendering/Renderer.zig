@@ -50,6 +50,8 @@ pub const Renderer = struct {
         return self.backend.loadTexture(path);
     }
 
+    // This and drawSprite have so much stuff in them now I'm wondering if 
+    // the redundant parameters could be consilidated. Idk.
     pub fn drawRect(self: *Renderer, params: DrawParams.RectParams) !void {
         const command = DrawCommand {
             .position = params.position,
@@ -110,6 +112,8 @@ pub const Renderer = struct {
         const items = self.renderQueue.items[0..self.renderQueue.len];
         var start_index: usize = 0;
 
+        // A bit weird looking maybe. We load into a buffer to deal with 
+        // the fact that the render queue stores things inside a "QueueEntry"
         while (start_index < items.len) {
             const end_index = self.renderQueue.nextBatchEnd(start_index);
 
@@ -124,7 +128,6 @@ pub const Renderer = struct {
         self.renderQueue.clear();
     }
 
-    // Very crude texture sorting.
     pub fn endDrawing(self: *Renderer) !void {
         try self.flushQueue();
     }

@@ -26,17 +26,17 @@ pub const RenderQueue = struct {
         };
     }
 
-    // This only includes texture information right now.
-    // And submission order.
+    // This includes the render_class, which is whether it's alpha blended, masked,
+    // or solid, as well as the texture and submission index, layer and order.
     // Inspired by this: https://realtimecollisiondetection.net/blog/?p=86
-    // Note that once we have this, we can sort with normal integer comparison
+    // This key means we can later sort by simple integer comparison.
     // The fields we care most about should go on the left.
     // This should include blending information too.
     // And maybe z layer for transparency.
     fn makeSortKey(command: DrawCommand, submission_index: u32) u64 {
         // Note that this could really be a u16. And we could even smash it into
         // 10 bits in the key.
-        // Also, the + 1 to tex here is to make room for null.
+        // Also, the + 1 to tex here is to make room for null, which is 0.
         const texture_key: u32 = if (command.material.texture) |tex| tex + 1 else 0;
 
         // Make sure the submission index and texture_key match the requirements.
@@ -48,15 +48,14 @@ pub const RenderQueue = struct {
         const layer_key: u16 = command.layer;
 
         // We don't sort alpha blended stuff by texture.
+        // This is inneficient for batching and could be fixed later.
         const packed_texture_key: u16 = switch (command.material.render_class) {
             .solid, .masked => @intCast(texture_key),
             .alpha_blended => 0,
         };
 
-        // This bitshift means that textures come before submission keys.
-        // Blending could later come before textures, so that transparent stuff
-        // gets rendered last?
-        // The layer probably doesn't need a whole 16 bits.
+        // Bit shifting to fit the various things in the key.
+        // Some or all of these could fit in fewer bits than they currently do.
         return (@as(u64, layer_key) << 48)
         | (@as(u64, command.order) << 32)
         | (@as(u64, packed_texture_key) << 16)
@@ -94,7 +93,7 @@ pub const RenderQueue = struct {
     }
 
     // This should be optimized later. Right now the approach is that 
-    // transparent stuff is never batched.
+    // transparent stuff is never batched. That's not optimal, for obvious reasons.
     pub fn nextBatchEnd(self: *const RenderQueue, startIndex: usize) usize {
         if (self.items[startIndex].command.material.render_class == .alpha_blended ) {
             return startIndex + 1;
